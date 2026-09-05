@@ -85,8 +85,6 @@ const authPasswordInput = document.getElementById('auth-password');
 const authModalTitle = document.getElementById('auth-modal-title');
 const authSubmitBtn = document.getElementById('auth-submit-btn');
 const authErrorAlert = document.getElementById('auth-error-alert');
-const tabLogin = document.getElementById('tab-login');
-const tabRegister = document.getElementById('tab-register');
 const btnGoogleLogin = document.getElementById('btn-google-login');
 const btnGuestLogin = document.getElementById('btn-guest-login');
 
@@ -213,31 +211,14 @@ function setAuthError(msg) {
   }
 }
 
-function switchAuthTab(tab) {
-  activeAuthTab = tab;
-  setAuthError('');
-  if (tab === 'login') {
-    tabLogin.classList.add('active');
-    tabRegister.classList.remove('active');
-    authModalTitle.textContent = 'Masuk ke Akun Anda';
-    authSubmitBtn.textContent = 'Masuk Sekarang';
-  } else {
-    tabRegister.classList.add('active');
-    tabLogin.classList.remove('active');
-    authModalTitle.textContent = 'Daftar Akun Baru';
-    authSubmitBtn.textContent = 'Buat Akun Baru';
-  }
-}
-
-tabLogin.addEventListener('click', () => switchAuthTab('login'));
-tabRegister.addEventListener('click', () => switchAuthTab('register'));
 btnOpenAuth.addEventListener('click', () => {
-  switchAuthTab('login');
+  setAuthError('');
   authForm.reset();
   openModal(modalAuth);
+  setTimeout(() => authEmailInput.focus(), 100);
 });
 
-// Submit Form Email / Password
+// Submit Form Email / Password (Hanya Login Pemilik Akun)
 authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = authEmailInput.value.trim();
@@ -251,25 +232,18 @@ authForm.addEventListener('submit', async (e) => {
 
   if (isFirebaseConfigured() && auth) {
     try {
-      if (activeAuthTab === 'login') {
-        const userCred = await signInWithEmailAndPassword(auth, email, password);
-        showToast(`👋 Selamat datang, ${userCred.user.email}!`);
-      } else {
-        const userCred = await createUserWithEmailAndPassword(auth, email, password);
-        showToast(`🎉 Akun berhasil dibuat: ${userCred.user.email}`);
-      }
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      showToast(`👋 Selamat datang kembali, ${userCred.user.email}!`);
       closeModal(modalAuth);
     } catch (err) {
       console.error('Auth error:', err);
-      let errMsg = 'Terjadi kesalahan pada autentikasi.';
+      let errMsg = 'Terjadi kesalahan saat masuk.';
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        errMsg = 'Email atau kata sandi tidak cocok.';
-      } else if (err.code === 'auth/email-already-in-use') {
-        errMsg = 'Alamat email ini sudah terdaftar. Silakan Masuk.';
-      } else if (err.code === 'auth/weak-password') {
-        errMsg = 'Kata sandi terlalu pendek (minimal 6 karakter).';
+        errMsg = 'Email atau kata sandi salah. Pastikan akun sudah dibuat di Firebase Console.';
       } else if (err.code === 'auth/invalid-email') {
         errMsg = 'Format email tidak valid.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errMsg = 'Terlalu banyak percobaan gagal. Silakan tunggu beberapa saat.';
       }
       setAuthError(errMsg);
     }
@@ -288,7 +262,7 @@ authForm.addEventListener('submit', async (e) => {
   }
 
   authSubmitBtn.disabled = false;
-  authSubmitBtn.textContent = activeAuthTab === 'login' ? 'Masuk Sekarang' : 'Buat Akun Baru';
+  authSubmitBtn.textContent = 'Masuk Sekarang';
 });
 
 // Login Google

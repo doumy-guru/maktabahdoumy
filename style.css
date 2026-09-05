@@ -974,6 +974,17 @@ body {
   margin-bottom: 16px;
 }
 
+.modal-auth-note {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  background: var(--bg-main);
+  border-left: 3px solid var(--primary);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 18px;
+  line-height: 1.4;
+}
+
 .modal-footer {
   padding: 16px 24px;
   border-top: 1px solid var(--border-color);

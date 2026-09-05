@@ -32,7 +32,7 @@
         <!-- Profil Pengguna & Tombol Auth -->
         <div class="header-auth" id="header-auth">
           <button type="button" id="btn-open-auth" class="btn btn-outline btn-auth">
-            <span>🔐</span> Masuk / Daftar
+            <span>🔐</span> Masuk Akun
           </button>
           
           <div id="user-profile" class="user-profile hidden">
@@ -176,21 +176,17 @@
     </main>
 
     <!-- ==========================================================================
-         MODAL 1: Autentikasi Pengguna (Login & Register)
+         MODAL 1: Autentikasi Pengguna (Login Pemilik)
          ========================================================================== -->
     <div id="modal-auth" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
       <div class="modal-dialog">
         <div class="modal-header">
-          <h3 id="auth-modal-title">Masuk ke Akun Anda</h3>
+          <h3 id="auth-modal-title">Masuk ke Akun Pemilik</h3>
           <button type="button" class="modal-close-btn" data-close="modal-auth" aria-label="Tutup modal">✕</button>
         </div>
 
         <div class="modal-body">
-          <!-- Tab Auth: Masuk vs Daftar -->
-          <div class="auth-tabs">
-            <button type="button" id="tab-login" class="auth-tab-btn active">Masuk</button>
-            <button type="button" id="tab-register" class="auth-tab-btn">Daftar Akun</button>
-          </div>
+          <p class="modal-auth-note">Aplikasi koleksi pribadi. Hanya pemilik yang dapat masuk untuk mengelola data koleksi buku.</p>
 
           <!-- Alert Pesan Error Auth -->
           <div id="auth-error-alert" class="alert alert-danger hidden"></div>
@@ -204,7 +200,7 @@
 
             <div class="form-group">
               <label for="auth-password">Kata Sandi <span class="required">*</span></label>
-              <input type="password" id="auth-password" placeholder="Minimal 6 karakter" autocomplete="current-password" required>
+              <input type="password" id="auth-password" placeholder="Masukkan kata sandi akun" autocomplete="current-password" required>
             </div>
 
             <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
@@ -219,10 +215,10 @@
           <!-- Tombol Google & Guest -->
           <div class="auth-extra-actions">
             <button type="button" id="btn-google-login" class="btn btn-social btn-google">
-              <span class="social-icon">🌐</span> Masuk dengan Google
+              <span class="social-icon">🌐</span> Masuk dengan Akun Google Pemilik
             </button>
             <button type="button" id="btn-guest-login" class="btn btn-social btn-guest">
-              <span class="social-icon">👤</span> Lanjutkan sebagai Tamu (Mode Offline)
+              <span class="social-icon">👤</span> Masuk sebagai Tamu (Mode Offline)
             </button>
           </div>
         </div>

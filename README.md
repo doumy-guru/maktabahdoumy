@@ -26,24 +26,31 @@ Aplikasi web modern, dinamis, dan *mobile-friendly* untuk mencatat koleksi buku 
 3. Pada menu sebelah kiri, pilih **Build > Firestore Database**, lalu klik **Create database**.
 4. Pilih lokasi database terdekat (misalnya: `asia-southeast2` untuk Jakarta atau `asia-southeast1` untuk Singapura).
 5. Pilih **"Start in test mode"** agar aplikasi dapat membaca dan menulis data buku secara langsung.
-   > **Catatan Security Rules:**
-   > Aturan database akan mengizinkan baca/tulis. Anda dapat memeriksanya di tab **Rules**:
+   > **Pengaturan Firestore Security Rules (Koleksi Pribadi):**
+   > Buka tab **Rules** pada Firestore Database, lalu ubah aturannya agar hanya pemilik yang telah login yang dapat menulis data:
    > ```javascript
    > rules_version = '2';
    > service cloud.firestore {
    >   match /databases/{database}/documents {
-   >     match /{document=**} {
-   >       allow read, write: if true;
+   >     match /books/{bookId} {
+   >       // Pengunjung dapat membaca/melihat koleksi buku Anda
+   >       allow read: if true;
+   >       // Hanya Anda (setelah login) yang dapat menambah, mengedit, atau menghapus buku
+   >       allow write: if request.auth != null;
    >     }
    >   }
    > }
    > ```
-6. **Aktivasi Firebase Authentication:**
+   > Klik tombol **"Publish"** untuk menerapkan aturan keamanan.
+6. **Aktivasi Firebase Authentication & Buat Akun Pemilik:**
    - Di menu sebelah kiri, pilih **Build > Authentication**, lalu klik **Get Started**.
-   - Pada tab **Sign-in method**, aktifkan penyedia yang ingin digunakan:
+   - Pada tab **Sign-in method**, aktifkan penyedia:
      - **Email/Password**: Aktifkan toggle Email/Password lalu simpan.
-     - **Google**: Aktifkan toggle Google, masukkan email dukungan proyek, lalu simpan.
-     - **Anonymous**: Aktifkan opsi Anonymous untuk mode tamu.
+     - **Google**: (Opsional) Aktifkan toggle Google jika ingin login dengan akun Google Anda.
+   - **Membuat Akun Pemilik Secara Privat (Tanpa Pendaftaran Publik):**
+     - Buka tab **Users** di menu Authentication.
+     - Klik tombol **"Add user"** (Tambah pengguna).
+     - Masukkan alamat email Anda dan buat kata sandi aman. Akun ini yang akan Anda gunakan untuk login di website.
    - Pada tab **Settings > Authorized domains**, pastikan `localhost` serta domain GitHub Pages Anda (`<username>.github.io`) sudah terdaftar dalam daftar domain yang diizinkan.
 
 ---
