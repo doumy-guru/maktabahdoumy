@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Koleksi Buku Pribadi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="header-icon">📚</div>
+        <div class="header-text-group">
+          <h1>Koleksi Buku Pribadi</h1>
+          <p class="subtitle">Kelola dan pantau progres membaca buku koleksi Anda secara online</p>
+          <div class="header-badges">
+            <span id="sync-badge" class="sync-badge status-offline">
+              <span id="sync-dot" class="sync-dot"></span>
+              <span id="sync-text">Mode Offline (LocalStorage)</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Ringkasan Statistik -->
+    <section class="stats-grid" aria-label="Statistik Koleksi Buku">
+      <div class="stat-card">
+        <div class="stat-icon total-icon">📖</div>
+        <div class="stat-info">
+          <span class="stat-label">Total Buku</span>
+          <span id="stat-total" class="stat-value">0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon unread-icon">⏳</div>
+        <div class="stat-info">
+          <span class="stat-label">Belum Dibaca</span>
+          <span id="stat-unread" class="stat-value">0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon read-icon">✅</div>
+        <div class="stat-info">
+          <span class="stat-label">Selesai Dibaca</span>
+          <span id="stat-read" class="stat-value">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layout Utama: Form Tambah & Daftar Buku -->
+    <main class="main-layout">
+      <!-- Form Tambah Buku -->
+      <section class="card form-card">
+        <div class="card-header">
+          <h2>Tambah Buku Baru</h2>
+          <p>Masukkan data buku yang ingin ditambahkan ke koleksi.</p>
+        </div>
+
+        <form id="book-form" novalidate>
+          <div class="form-group">
+            <label for="book-title">Judul Buku <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="book-title" 
+              name="title" 
+              placeholder="Contoh: Filosofi Teras" 
+              autocomplete="off" 
+              required
+            >
+            <span class="error-msg" id="title-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="book-author">Penulis <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="book-author" 
+              name="author" 
+              placeholder="Contoh: Henry Manampiring" 
+              autocomplete="off" 
+              required
+            >
+            <span class="error-msg" id="author-error"></span>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label" for="book-is-read">
+              <input type="checkbox" id="book-is-read" name="isRead">
+              <span class="custom-checkbox"></span>
+              <span>Tandai sudah selesai dibaca</span>
+            </label>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn btn-primary">
+            <span class="btn-icon">➕</span> Tambah ke Koleksi
+          </button>
+        </form>
+      </section>
+
+      <!-- Daftar Buku -->
+      <section class="card collection-card">
+        <div class="card-header collection-header">
+          <div>
+            <h2>Daftar Buku</h2>
+            <p>Daftar seluruh buku yang tersimpan dalam koleksi.</p>
+          </div>
+
+          <!-- Filter Status -->
+          <div class="filter-group" role="tablist" aria-label="Filter status buku">
+            <button type="button" class="filter-btn active" data-filter="all">Semua</button>
+            <button type="button" class="filter-btn" data-filter="unread">Belum Dibaca</button>
+            <button type="button" class="filter-btn" data-filter="read">Selesai</button>
+          </div>
+        </div>
+
+        <!-- Bilah Pencarian (Search Bar) -->
+        <div class="search-container">
+          <div class="search-box">
+            <span class="search-icon" aria-hidden="true">🔍</span>
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Cari judul buku atau penulis..." 
+              autocomplete="off" 
+              aria-label="Cari judul buku atau penulis"
+            >
+            <button type="button" id="clear-search-btn" class="clear-search-btn hidden" aria-label="Hapus kata kunci pencarian">✕</button>
+          </div>
+        </div>
+
+        <!-- Kontainer Kartu Buku -->
+        <div id="book-list" class="book-list"></div>
+
+        <!-- Tampilan Kosong (Empty State) -->
+        <div id="empty-state" class="empty-state hidden">
+          <div class="empty-icon">📭</div>
+          <h3>Belum Ada Buku</h3>
+          <p id="empty-text">Koleksi Anda masih kosong. Mulai tambahkan buku pertama Anda menggunakan formulir di sebelah kiri!</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast Notifikasi -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Aplikasi Koleksi Buku Pribadi &bull; Didukung oleh Firebase Cloud Firestore &amp; GitHub Pages</p>
+    </footer>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
