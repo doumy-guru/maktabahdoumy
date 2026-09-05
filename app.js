@@ -1,30 +1,8 @@
 /**
- * Aplikasi Koleksi Buku Pribadi
- * Mendukung Firebase Cloud Firestore & Auth, Tracking Peminjaman, Catatan/Review Buku,
+ * Aplikasi Koleksi Buku Pribadi - Maktabah Doumy
+ * Mendukung Firebase Cloud Firestore & Auth (Compat SDK), Tracking Peminjaman, Catatan/Review Buku,
  * serta LocalStorage Fallback (Mode Offline).
  */
-
-import { 
-  db, 
-  auth,
-  googleProvider,
-  isFirebaseConfigured, 
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy, 
-  serverTimestamp,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  signInAnonymously
-} from './firebase-config.js';
 
 // Kunci penyimpanan LocalStorage
 const STORAGE_KEY = 'PERSONAL_BOOKSHELF_APP_DATA';
@@ -35,21 +13,24 @@ let books = [];
 let currentFilter = 'all'; // 'all' | 'unread' | 'read' | 'borrowed'
 let searchQuery = '';
 let isUsingFirebase = false;
-let currentUser = null; // Object pengguna yang sedang aktif
-let activeAuthTab = 'login'; // 'login' | 'register'
+let currentUser = null; // Object pengguna yang sedang aktif (null jika pengunjung umum)
 let selectedStarRating = 0;
 let unsubscribeFirestore = null;
 
 // ==========================================================================
 // Selektor DOM
 // ==========================================================================
-// Form Tambah Buku
+// Sidebar & Form Tambah Buku
+const formCard = document.getElementById('form-card');
+const authPromptCard = document.getElementById('auth-prompt-card');
+const btnLoginPrompt = document.getElementById('btn-login-prompt');
 const bookForm = document.getElementById('book-form');
 const titleInput = document.getElementById('book-title');
 const authorInput = document.getElementById('book-author');
 const isReadCheckbox = document.getElementById('book-is-read');
 const titleError = document.getElementById('title-error');
 const authorError = document.getElementById('author-error');
+const collectionSubtext = document.getElementById('collection-subtext');
 
 // Daftar & Pencarian
 const bookList = document.getElementById('book-list');
@@ -77,12 +58,11 @@ const userName = document.getElementById('user-name');
 const userEmail = document.getElementById('user-email');
 const btnLogout = document.getElementById('btn-logout');
 
-// Modal 1: Auth
+// Modal 1: Auth Pemilik
 const modalAuth = document.getElementById('modal-auth');
 const authForm = document.getElementById('auth-form');
 const authEmailInput = document.getElementById('auth-email');
 const authPasswordInput = document.getElementById('auth-password');
-const authModalTitle = document.getElementById('auth-modal-title');
 const authSubmitBtn = document.getElementById('auth-submit-btn');
 const authErrorAlert = document.getElementById('auth-error-alert');
 const btnGoogleLogin = document.getElementById('btn-google-login');
@@ -107,7 +87,7 @@ const starButtons = document.querySelectorAll('#star-rating-container .star-btn'
 const starRatingText = document.getElementById('star-rating-text');
 const reviewTextInput = document.getElementById('review-text');
 
-// Toast
+// Timer toast
 let toastTimeout;
 
 // ==========================================================================
@@ -145,7 +125,7 @@ function closeModal(modalEl) {
   document.body.style.overflow = '';
 }
 
-// Event listener tutup modal
+// Event listener tombol tutup modal [data-close]
 document.querySelectorAll('[data-close]').forEach(btn => {
   btn.addEventListener('click', () => {
     const targetModalId = btn.dataset.close;
@@ -174,34 +154,53 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ==========================================================================
-// Sistem Autentikasi Pengguna (Firebase Auth + Mock Offline)
+// Sistem Autentikasi Pengguna & Hak Akses Pemilik vs Pengunjung
 // ==========================================================================
 function updateAuthUI(user) {
   currentUser = user;
 
   if (user) {
-    btnOpenAuth.classList.add('hidden');
-    userProfile.classList.remove('hidden');
+    // 1. SUDAH LOGIN SEBAGAI PEMILIK
+    if (btnOpenAuth) btnOpenAuth.classList.add('hidden');
+    if (userProfile) userProfile.classList.remove('hidden');
 
-    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Tamu');
-    userName.textContent = displayName;
-    userEmail.textContent = user.email || 'Mode Tamu / Offline';
+    // Tampilkan Form Tambah Buku, Sembunyikan Sambutan Pengunjung
+    if (formCard) formCard.classList.remove('hidden');
+    if (authPromptCard) authPromptCard.classList.add('hidden');
+    if (collectionSubtext) collectionSubtext.textContent = 'Mode Pemilik: Anda dapat menambah, mengubah, meminjamkan, dan menghapus buku.';
 
-    if (user.photoURL) {
-      userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${displayName}">`;
-    } else {
-      userAvatar.textContent = displayName.charAt(0).toUpperCase();
+    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Pemilik');
+    if (userName) userName.textContent = displayName;
+    if (userEmail) userEmail.textContent = user.email || 'Mode Tamu / Offline';
+
+    if (userAvatar) {
+      if (user.photoURL) {
+        userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${displayName}">`;
+      } else {
+        userAvatar.textContent = displayName.charAt(0).toUpperCase();
+      }
     }
   } else {
-    btnOpenAuth.classList.remove('hidden');
-    userProfile.classList.add('hidden');
-    userName.textContent = '';
-    userEmail.textContent = '';
-    userAvatar.textContent = '👤';
+    // 2. BELUM LOGIN (PENGUNJUNG UMUM)
+    if (btnOpenAuth) btnOpenAuth.classList.remove('hidden');
+    if (userProfile) userProfile.classList.add('hidden');
+
+    // Sembunyikan Form Tambah Buku, Tampilkan Sambutan Pengunjung
+    if (formCard) formCard.classList.add('hidden');
+    if (authPromptCard) authPromptCard.classList.remove('hidden');
+    if (collectionSubtext) collectionSubtext.textContent = 'Katalog Publik: Menampilkan seluruh koleksi buku yang tersimpan.';
+
+    if (userName) userName.textContent = '';
+    if (userEmail) userEmail.textContent = '';
+    if (userAvatar) userAvatar.textContent = '👤';
   }
+
+  // Re-render buku agar tombol aksi disesuaikan dengan hak akses
+  renderBooks();
 }
 
 function setAuthError(msg) {
+  if (!authErrorAlert) return;
   if (!msg) {
     authErrorAlert.classList.add('hidden');
     authErrorAlert.textContent = '';
@@ -211,105 +210,124 @@ function setAuthError(msg) {
   }
 }
 
-btnOpenAuth.addEventListener('click', () => {
-  setAuthError('');
-  authForm.reset();
-  openModal(modalAuth);
-  setTimeout(() => authEmailInput.focus(), 100);
-});
+// Buka modal login dari tombol header
+if (btnOpenAuth) {
+  btnOpenAuth.addEventListener('click', () => {
+    setAuthError('');
+    if (authForm) authForm.reset();
+    openModal(modalAuth);
+    if (authEmailInput) setTimeout(() => authEmailInput.focus(), 100);
+  });
+}
 
-// Submit Form Email / Password (Hanya Login Pemilik Akun)
-authForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = authEmailInput.value.trim();
-  const password = authPasswordInput.value;
+// Buka modal login dari tombol kartu sambutan
+if (btnLoginPrompt) {
+  btnLoginPrompt.addEventListener('click', () => {
+    setAuthError('');
+    if (authForm) authForm.reset();
+    openModal(modalAuth);
+    if (authEmailInput) setTimeout(() => authEmailInput.focus(), 100);
+  });
+}
 
-  if (!email || !password) return;
+// Submit Form Login Email & Password
+if (authForm) {
+  authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
 
-  setAuthError('');
-  authSubmitBtn.disabled = true;
-  authSubmitBtn.textContent = 'Memproses...';
+    if (!email || !password) return;
 
-  if (isFirebaseConfigured() && auth) {
-    try {
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
-      showToast(`👋 Selamat datang kembali, ${userCred.user.email}!`);
-      closeModal(modalAuth);
-    } catch (err) {
-      console.error('Auth error:', err);
-      let errMsg = 'Terjadi kesalahan saat masuk.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        errMsg = 'Email atau kata sandi salah. Pastikan akun sudah dibuat di Firebase Console.';
-      } else if (err.code === 'auth/invalid-email') {
-        errMsg = 'Format email tidak valid.';
-      } else if (err.code === 'auth/too-many-requests') {
-        errMsg = 'Terlalu banyak percobaan gagal. Silakan tunggu beberapa saat.';
+    setAuthError('');
+    authSubmitBtn.disabled = true;
+    authSubmitBtn.textContent = 'Memproses...';
+
+    if (isFirebaseConfigured() && auth) {
+      try {
+        const userCred = await auth.signInWithEmailAndPassword(email, password);
+        showToast(`👋 Selamat datang kembali, ${userCred.user.email}!`);
+        closeModal(modalAuth);
+      } catch (err) {
+        console.error('Auth error:', err);
+        let errMsg = 'Terjadi kesalahan saat masuk.';
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          errMsg = 'Email atau kata sandi salah. Pastikan akun sudah dibuat di Firebase Console.';
+        } else if (err.code === 'auth/invalid-email') {
+          errMsg = 'Format email tidak valid.';
+        } else if (err.code === 'auth/too-many-requests') {
+          errMsg = 'Terlalu banyak percobaan gagal. Silakan tunggu beberapa saat.';
+        }
+        setAuthError(errMsg);
       }
-      setAuthError(errMsg);
-    }
-  } else {
-    // Mock Auth (Offline mode)
-    const mockUser = {
-      uid: 'offline-' + Date.now(),
-      email: email,
-      displayName: email.split('@')[0],
-      photoURL: null
-    };
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
-    updateAuthUI(mockUser);
-    showToast(`👋 Masuk dalam mode offline: ${mockUser.displayName}`);
-    closeModal(modalAuth);
-  }
-
-  authSubmitBtn.disabled = false;
-  authSubmitBtn.textContent = 'Masuk Sekarang';
-});
-
-// Login Google
-btnGoogleLogin.addEventListener('click', async () => {
-  setAuthError('');
-  if (isFirebaseConfigured() && auth) {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      showToast(`👋 Selamat datang, ${result.user.displayName || result.user.email}!`);
+    } else {
+      // Mock Auth (Offline mode)
+      const mockUser = {
+        uid: 'offline-' + Date.now(),
+        email: email,
+        displayName: email.split('@')[0],
+        photoURL: null
+      };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
+      updateAuthUI(mockUser);
+      showToast(`👋 Masuk dalam mode offline: ${mockUser.displayName}`);
       closeModal(modalAuth);
-    } catch (err) {
-      console.error('Google Auth Error:', err);
-      if (err.code === 'auth/unauthorized-domain') {
-        setAuthError('Domain peramban ini belum diizinkan di Firebase Console > Authentication > Settings > Authorized domains.');
-      } else if (err.code !== 'auth/popup-closed-by-user') {
-        setAuthError('Gagal masuk dengan Google: ' + err.message);
+    }
+
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = 'Masuk Sekarang';
+  });
+}
+
+// Login dengan Google
+if (btnGoogleLogin) {
+  btnGoogleLogin.addEventListener('click', async () => {
+    setAuthError('');
+    if (isFirebaseConfigured() && auth && googleProvider) {
+      try {
+        const result = await auth.signInWithPopup(googleProvider);
+        showToast(`👋 Selamat datang, ${result.user.displayName || result.user.email}!`);
+        closeModal(modalAuth);
+      } catch (err) {
+        console.error('Google Auth Error:', err);
+        if (err.code === 'auth/unauthorized-domain') {
+          setAuthError('Domain peramban ini belum diizinkan di Firebase Console > Authentication > Settings > Authorized domains.');
+        } else if (err.code !== 'auth/popup-closed-by-user') {
+          setAuthError('Gagal masuk dengan Google: ' + err.message);
+        }
       }
-    }
-  } else {
-    const mockUser = {
-      uid: 'google-mock-' + Date.now(),
-      email: 'user.google@gmail.com',
-      displayName: 'Pengguna Google',
-      photoURL: null
-    };
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
-    updateAuthUI(mockUser);
-    showToast('👋 Masuk sebagai Pengguna Google (Mode Demo)');
-    closeModal(modalAuth);
-  }
-});
-
-// Login Tamu (Guest)
-btnGuestLogin.addEventListener('click', async () => {
-  if (isFirebaseConfigured() && auth) {
-    try {
-      const userCred = await signInAnonymously(auth);
-      showToast('👤 Masuk sebagai Tamu (Guest)');
+    } else {
+      const mockUser = {
+        uid: 'google-mock-' + Date.now(),
+        email: 'pemilik.google@gmail.com',
+        displayName: 'Pemilik (Google)',
+        photoURL: null
+      };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
+      updateAuthUI(mockUser);
+      showToast('👋 Masuk sebagai Pemilik (Mode Demo)');
       closeModal(modalAuth);
-    } catch (err) {
-      console.warn('Gagal login anonim Firebase, menggunakan local guest:', err);
+    }
+  });
+}
+
+// Login Tamu (Demo / Offline)
+if (btnGuestLogin) {
+  btnGuestLogin.addEventListener('click', async () => {
+    if (isFirebaseConfigured() && auth) {
+      try {
+        const userCred = await auth.signInAnonymously();
+        showToast('👤 Masuk sebagai Tamu (Guest)');
+        closeModal(modalAuth);
+      } catch (err) {
+        console.warn('Gagal login anonim Firebase, menggunakan local guest:', err);
+        createLocalGuest();
+      }
+    } else {
       createLocalGuest();
     }
-  } else {
-    createLocalGuest();
-  }
-});
+  });
+}
 
 function createLocalGuest() {
   const guestUser = {
@@ -324,28 +342,29 @@ function createLocalGuest() {
   closeModal(modalAuth);
 }
 
-// Logout
-btnLogout.addEventListener('click', async () => {
-  const confirmed = window.confirm('Apakah Anda yakin ingin keluar dari akun?');
-  if (!confirmed) return;
+// Tombol Keluar (Logout)
+if (btnLogout) {
+  btnLogout.addEventListener('click', async () => {
+    const confirmed = window.confirm('Apakah Anda yakin ingin keluar dari akun?');
+    if (!confirmed) return;
 
-  if (isFirebaseConfigured() && auth) {
-    try {
-      await signOut(auth);
-      showToast('🚪 Anda telah keluar dari akun.');
-    } catch (err) {
-      console.error('Logout error:', err);
+    if (isFirebaseConfigured() && auth) {
+      try {
+        await auth.signOut();
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
     }
-  }
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-  updateAuthUI(null);
-  showToast('🚪 Berhasil keluar.');
-});
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    updateAuthUI(null);
+    showToast('🚪 Anda telah keluar.');
+  });
+}
 
 // Inisialisasi Auth Listener
 function initAuth() {
   if (isFirebaseConfigured() && auth) {
-    onAuthStateChanged(auth, (user) => {
+    auth.onAuthStateChanged((user) => {
       updateAuthUI(user);
     });
   } else {
@@ -437,14 +456,13 @@ function initializeFirebaseSync() {
   updateSyncStatus('connecting', 'Menghubungkan ke Cloud...');
 
   try {
-    const booksCollection = collection(db, 'books');
-    const booksQuery = query(booksCollection, orderBy('createdAt', 'desc'));
-
     if (unsubscribeFirestore) {
       unsubscribeFirestore();
     }
 
-    unsubscribeFirestore = onSnapshot(booksQuery, (snapshot) => {
+    const booksRef = db.collection('books').orderBy('createdAt', 'desc');
+
+    unsubscribeFirestore = booksRef.onSnapshot((snapshot) => {
       isUsingFirebase = true;
       updateSyncStatus('online', '☁️ Tersinkronisasi Cloud (Firebase)');
 
@@ -470,7 +488,7 @@ function initializeFirebaseSync() {
       saveToLocalStorage();
       renderBooks();
     }, (error) => {
-      console.warn('Gagal menghubungkan ke Firestore Real-Time:', error.message);
+      console.warn('Firestore onSnapshot error:', error.message);
       isUsingFirebase = false;
       updateSyncStatus('offline', 'Mode Offline (LocalStorage)');
       showToast('⚠️ Firestore offline / periksa izin Rules');
@@ -602,58 +620,60 @@ function createBookElement(book) {
     item.appendChild(reviewCard);
   }
 
-  // 4. Baris Tombol Aksi
-  const actionsBar = document.createElement('div');
-  actionsBar.className = 'book-actions-bar';
+  // 4. Baris Tombol Aksi (HANYA DITAMPILKAN JIKA PEMILIK SUDAH LOGIN!)
+  if (currentUser) {
+    const actionsBar = document.createElement('div');
+    actionsBar.className = 'book-actions-bar';
 
-  // Tombol Toggle Status Baca
-  const toggleBtn = document.createElement('button');
-  toggleBtn.type = 'button';
-  toggleBtn.className = 'btn btn-action btn-toggle';
-  toggleBtn.innerHTML = book.isRead 
-    ? '<span>🔄</span> Belum Dibaca' 
-    : '<span>✅</span> Selesai';
-  toggleBtn.setAttribute('aria-label', `Ubah status baca ${book.title}`);
-  toggleBtn.addEventListener('click', () => toggleBookStatus(book.id));
-  actionsBar.appendChild(toggleBtn);
+    // Tombol Toggle Status Baca
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'btn btn-action btn-toggle';
+    toggleBtn.innerHTML = book.isRead 
+      ? '<span>🔄</span> Belum Dibaca' 
+      : '<span>✅</span> Selesai';
+    toggleBtn.setAttribute('aria-label', `Ubah status baca ${book.title}`);
+    toggleBtn.addEventListener('click', () => toggleBookStatus(book.id));
+    actionsBar.appendChild(toggleBtn);
 
-  // Tombol Peminjaman
-  const loanBtn = document.createElement('button');
-  loanBtn.type = 'button';
-  loanBtn.className = 'btn btn-action btn-loan-action';
-  if (book.isBorrowed) {
-    loanBtn.innerHTML = '<span>↩️</span> Kembalikan';
-    loanBtn.setAttribute('aria-label', `Kembalikan buku ${book.title}`);
-    loanBtn.addEventListener('click', () => returnBook(book.id, book.title));
-  } else {
-    loanBtn.innerHTML = '<span>🤝</span> Pinjamkan';
-    loanBtn.setAttribute('aria-label', `Pinjamkan buku ${book.title}`);
-    loanBtn.addEventListener('click', () => openLoanModal(book));
+    // Tombol Peminjaman
+    const loanBtn = document.createElement('button');
+    loanBtn.type = 'button';
+    loanBtn.className = 'btn btn-action btn-loan-action';
+    if (book.isBorrowed) {
+      loanBtn.innerHTML = '<span>↩️</span> Kembalikan';
+      loanBtn.setAttribute('aria-label', `Kembalikan buku ${book.title}`);
+      loanBtn.addEventListener('click', () => returnBook(book.id, book.title));
+    } else {
+      loanBtn.innerHTML = '<span>🤝</span> Pinjamkan';
+      loanBtn.setAttribute('aria-label', `Pinjamkan buku ${book.title}`);
+      loanBtn.addEventListener('click', () => openLoanModal(book));
+    }
+    actionsBar.appendChild(loanBtn);
+
+    // Tombol Catatan / Review (Hanya jika Selesai Dibaca)
+    if (book.isRead) {
+      const reviewBtn = document.createElement('button');
+      reviewBtn.type = 'button';
+      reviewBtn.className = 'btn btn-action btn-review-action';
+      const hasReview = (book.rating > 0 || (book.review && book.review.trim()));
+      reviewBtn.innerHTML = hasReview ? '<span>✏️</span> Edit Review' : '<span>📝</span> Beri Review';
+      reviewBtn.setAttribute('aria-label', `Catatan dan review ${book.title}`);
+      reviewBtn.addEventListener('click', () => openReviewModal(book));
+      actionsBar.appendChild(reviewBtn);
+    }
+
+    // Tombol Hapus Buku
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn btn-action btn-delete';
+    deleteBtn.innerHTML = '<span>🗑️</span> Hapus';
+    deleteBtn.setAttribute('aria-label', `Hapus buku ${book.title}`);
+    deleteBtn.addEventListener('click', () => deleteBook(book.id, book.title));
+    actionsBar.appendChild(deleteBtn);
+
+    item.appendChild(actionsBar);
   }
-  actionsBar.appendChild(loanBtn);
-
-  // Tombol Catatan / Review (Hanya jika Selesai Dibaca)
-  if (book.isRead) {
-    const reviewBtn = document.createElement('button');
-    reviewBtn.type = 'button';
-    reviewBtn.className = 'btn btn-action btn-review-action';
-    const hasReview = (book.rating > 0 || (book.review && book.review.trim()));
-    reviewBtn.innerHTML = hasReview ? '<span>✏️</span> Edit Review' : '<span>📝</span> Beri Review';
-    reviewBtn.setAttribute('aria-label', `Catatan dan review ${book.title}`);
-    reviewBtn.addEventListener('click', () => openReviewModal(book));
-    actionsBar.appendChild(reviewBtn);
-  }
-
-  // Tombol Hapus Buku
-  const deleteBtn = document.createElement('button');
-  deleteBtn.type = 'button';
-  deleteBtn.className = 'btn btn-action btn-delete';
-  deleteBtn.innerHTML = '<span>🗑️</span> Hapus';
-  deleteBtn.setAttribute('aria-label', `Hapus buku ${book.title}`);
-  deleteBtn.addEventListener('click', () => deleteBook(book.id, book.title));
-  actionsBar.appendChild(deleteBtn);
-
-  item.appendChild(actionsBar);
 
   return item;
 }
@@ -679,6 +699,7 @@ function formatDisplayDate(dateStr) {
 // Render Seluruh Koleksi Buku
 // ==========================================================================
 function renderBooks() {
+  if (!bookList) return;
   bookList.innerHTML = '';
 
   let filteredBooks = books;
@@ -706,13 +727,15 @@ function renderBooks() {
   if (filteredBooks.length === 0) {
     emptyState.classList.remove('hidden');
     if (books.length === 0) {
-      emptyText.textContent = 'Koleksi Anda masih kosong. Mulai tambahkan buku pertama Anda!';
+      emptyText.textContent = currentUser 
+        ? 'Koleksi Anda masih kosong. Mulai tambahkan buku pertama Anda menggunakan formulir!' 
+        : 'Koleksi buku saat ini masih kosong.';
     } else if (queryText) {
       emptyText.textContent = `Tidak ada buku yang cocok dengan pencarian "${searchQuery}".`;
     } else if (currentFilter === 'borrowed') {
       emptyText.textContent = 'Tidak ada buku yang sedang dipinjam saat ini.';
     } else if (currentFilter === 'unread') {
-      emptyText.textContent = 'Hebat! Semua buku dalam koleksi telah selesai dibaca.';
+      emptyText.textContent = 'Semua buku dalam koleksi telah selesai dibaca.';
     } else if (currentFilter === 'read') {
       emptyText.textContent = 'Belum ada buku yang selesai dibaca.';
     }
@@ -754,9 +777,9 @@ async function addBook(title, author, isRead) {
   if (isUsingFirebase && db) {
     try {
       showToast('☁️ Menyimpan ke Cloud...');
-      await addDoc(collection(db, 'books'), {
+      await db.collection('books').add({
         ...bookData,
-        createdAt: serverTimestamp()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       showToast(`☁️ Buku "${bookData.title}" tersimpan di Cloud!`);
     } catch (error) {
@@ -767,8 +790,8 @@ async function addBook(title, author, isRead) {
     fallbackAddLocal(bookData);
   }
 
-  bookForm.reset();
-  titleInput.focus();
+  if (bookForm) bookForm.reset();
+  if (titleInput) titleInput.focus();
 }
 
 function fallbackAddLocal(bookData) {
@@ -792,8 +815,7 @@ async function toggleBookStatus(id) {
 
   if (isUsingFirebase && db) {
     try {
-      const bookRef = doc(db, 'books', id);
-      await updateDoc(bookRef, { isRead: newStatus });
+      await db.collection('books').doc(id).update({ isRead: newStatus });
       showToast(`☁️ Status: ${statusLabel}`);
     } catch (error) {
       console.error('Firestore update error:', error);
@@ -817,8 +839,7 @@ async function deleteBook(id, title) {
   if (isUsingFirebase && db) {
     try {
       showToast('🗑️ Menghapus...');
-      const bookRef = doc(db, 'books', id);
-      await deleteDoc(bookRef);
+      await db.collection('books').doc(id).delete();
       showToast(`🗑️ Buku "${title}" berhasil dihapus.`);
     } catch (error) {
       console.error('Firestore delete error:', error);
@@ -844,11 +865,9 @@ function openLoanModal(book) {
   borrowerNameInput.value = '';
   borrowerNameError.textContent = '';
   
-  // Set default tanggal hari ini
   const today = new Date().toISOString().split('T')[0];
   borrowDateInput.value = today;
 
-  // Set default tanggal kembali 14 hari ke depan
   const nextTwoWeeks = new Date();
   nextTwoWeeks.setDate(nextTwoWeeks.getDate() + 14);
   returnDeadlineInput.value = nextTwoWeeks.toISOString().split('T')[0];
@@ -857,41 +876,43 @@ function openLoanModal(book) {
   setTimeout(() => borrowerNameInput.focus(), 100);
 }
 
-loanForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const bookId = loanBookIdInput.value;
-  const borrowerName = borrowerNameInput.value.trim();
-  const borrowDate = borrowDateInput.value;
-  const returnDeadline = returnDeadlineInput.value;
+if (loanForm) {
+  loanForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const bookId = loanBookIdInput.value;
+    const borrowerName = borrowerNameInput.value.trim();
+    const borrowDate = borrowDateInput.value;
+    const returnDeadline = returnDeadlineInput.value;
 
-  if (!borrowerName) {
-    borrowerNameError.textContent = 'Nama peminjam wajib diisi.';
-    borrowerNameInput.focus();
-    return;
-  }
+    if (!borrowerName) {
+      borrowerNameError.textContent = 'Nama peminjam wajib diisi.';
+      borrowerNameInput.focus();
+      return;
+    }
 
-  const updateData = {
-    isBorrowed: true,
-    borrowerName: borrowerName,
-    borrowDate: borrowDate,
-    returnDeadline: returnDeadline
-  };
+    const updateData = {
+      isBorrowed: true,
+      borrowerName: borrowerName,
+      borrowDate: borrowDate,
+      returnDeadline: returnDeadline
+    };
 
-  if (isUsingFirebase && db) {
-    try {
-      showToast('🤝 Menyimpan peminjaman...');
-      await updateDoc(doc(db, 'books', bookId), updateData);
-      showToast(`🤝 Buku berhasil dipinjamkan ke ${borrowerName}!`);
-    } catch (err) {
-      console.error('Error pinjam Firestore:', err);
+    if (isUsingFirebase && db) {
+      try {
+        showToast('🤝 Menyimpan peminjaman...');
+        await db.collection('books').doc(bookId).update(updateData);
+        showToast(`🤝 Buku dipinjamkan ke ${borrowerName}!`);
+      } catch (err) {
+        console.error('Error pinjam Firestore:', err);
+        localBorrowUpdate(bookId, updateData);
+      }
+    } else {
       localBorrowUpdate(bookId, updateData);
     }
-  } else {
-    localBorrowUpdate(bookId, updateData);
-  }
 
-  closeModal(modalLoan);
-});
+    closeModal(modalLoan);
+  });
+}
 
 function localBorrowUpdate(bookId, updateData) {
   const target = books.find(b => b.id === bookId);
@@ -917,7 +938,7 @@ async function returnBook(bookId, title) {
   if (isUsingFirebase && db) {
     try {
       showToast('↩️ Memproses pengembalian...');
-      await updateDoc(doc(db, 'books', bookId), returnData);
+      await db.collection('books').doc(bookId).update(returnData);
       showToast(`✅ Buku "${title}" telah dikembalikan.`);
     } catch (err) {
       console.error('Error return Firestore:', err);
@@ -953,7 +974,9 @@ function updateStarRatingUI(rating) {
   });
 
   const ratingLabels = ['', 'Sangat Kurang ⭐', 'Kurang ⭐⭐', 'Cukup ⭐⭐⭐', 'Bagus ⭐⭐⭐⭐', 'Luar Biasa! ⭐⭐⭐⭐⭐'];
-  starRatingText.textContent = rating > 0 ? ratingLabels[rating] : 'Pilih rating (opsional)';
+  if (starRatingText) {
+    starRatingText.textContent = rating > 0 ? ratingLabels[rating] : 'Pilih rating (opsional)';
+  }
 }
 
 starButtons.forEach(btn => {
@@ -973,37 +996,39 @@ function openReviewModal(book) {
   setTimeout(() => reviewTextInput.focus(), 100);
 }
 
-reviewForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const bookId = reviewBookIdInput.value;
-  const rating = selectedStarRating;
-  const reviewText = reviewTextInput.value.trim();
+if (reviewForm) {
+  reviewForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const bookId = reviewBookIdInput.value;
+    const rating = selectedStarRating;
+    const reviewText = reviewTextInput.value.trim();
 
-  const formattedDate = new Date().toLocaleDateString('id-ID', { 
-    day: 'numeric', month: 'short', year: 'numeric' 
-  });
+    const formattedDate = new Date().toLocaleDateString('id-ID', { 
+      day: 'numeric', month: 'short', year: 'numeric' 
+    });
 
-  const reviewData = {
-    rating: rating,
-    review: reviewText,
-    reviewDate: formattedDate
-  };
+    const reviewData = {
+      rating: rating,
+      review: reviewText,
+      reviewDate: formattedDate
+    };
 
-  if (isUsingFirebase && db) {
-    try {
-      showToast('📝 Menyimpan review...');
-      await updateDoc(doc(db, 'books', bookId), reviewData);
-      showToast('⭐ Catatan & review berhasil disimpan ke Cloud!');
-    } catch (err) {
-      console.error('Error save review Firestore:', err);
+    if (isUsingFirebase && db) {
+      try {
+        showToast('📝 Menyimpan review...');
+        await db.collection('books').doc(bookId).update(reviewData);
+        showToast('⭐ Catatan & review berhasil disimpan ke Cloud!');
+      } catch (err) {
+        console.error('Error save review Firestore:', err);
+        localReviewUpdate(bookId, reviewData);
+      }
+    } else {
       localReviewUpdate(bookId, reviewData);
     }
-  } else {
-    localReviewUpdate(bookId, reviewData);
-  }
 
-  closeModal(modalReview);
-});
+    closeModal(modalReview);
+  });
+}
 
 function localReviewUpdate(bookId, reviewData) {
   const target = books.find(b => b.id === bookId);
@@ -1044,26 +1069,32 @@ function validateBookForm() {
   return isValid;
 }
 
-bookForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (validateBookForm()) {
-    addBook(titleInput.value, authorInput.value, isReadCheckbox.checked);
-  }
-});
+if (bookForm) {
+  bookForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (validateBookForm()) {
+      addBook(titleInput.value, authorInput.value, isReadCheckbox.checked);
+    }
+  });
+}
 
-titleInput.addEventListener('input', () => {
-  if (titleInput.value.trim()) {
-    titleInput.classList.remove('invalid');
-    titleError.textContent = '';
-  }
-});
+if (titleInput) {
+  titleInput.addEventListener('input', () => {
+    if (titleInput.value.trim()) {
+      titleInput.classList.remove('invalid');
+      titleError.textContent = '';
+    }
+  });
+}
 
-authorInput.addEventListener('input', () => {
-  if (authorInput.value.trim()) {
-    authorInput.classList.remove('invalid');
-    authorError.textContent = '';
-  }
-});
+if (authorInput) {
+  authorInput.addEventListener('input', () => {
+    if (authorInput.value.trim()) {
+      authorInput.classList.remove('invalid');
+      authorError.textContent = '';
+    }
+  });
+}
 
 // ==========================================================================
 // Pencarian & Filter Tabs
@@ -1077,28 +1108,32 @@ filterButtons.forEach(btn => {
   });
 });
 
-searchInput.addEventListener('input', (e) => {
-  searchQuery = e.target.value;
-  if (searchQuery.trim().length > 0) {
-    clearSearchBtn.classList.remove('hidden');
-  } else {
+if (searchInput) {
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    if (searchQuery.trim().length > 0) {
+      clearSearchBtn.classList.remove('hidden');
+    } else {
+      clearSearchBtn.classList.add('hidden');
+    }
+    renderBooks();
+  });
+}
+
+if (clearSearchBtn) {
+  clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchQuery = '';
     clearSearchBtn.classList.add('hidden');
-  }
-  renderBooks();
-});
-
-clearSearchBtn.addEventListener('click', () => {
-  searchInput.value = '';
-  searchQuery = '';
-  clearSearchBtn.classList.add('hidden');
-  searchInput.focus();
-  renderBooks();
-});
+    searchInput.focus();
+    renderBooks();
+  });
+}
 
 // ==========================================================================
-// Inisialisasi Aplikasi Saat Memuat Halaman
+// Inisialisasi Aplikasi (Kompatibel dengan segala kondisi loading DOM)
 // ==========================================================================
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   initAuth();
 
   if (isFirebaseConfigured() && db) {
@@ -1107,4 +1142,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSyncStatus('offline', 'Mode Offline (LocalStorage)');
     loadFromLocalStorage();
   }
-});
+}
+
+// Menjalankan aplikasi secara andal tanpa terpengaruh race-condition
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

@@ -382,11 +382,71 @@ body {
 }
 
 /* ==========================================================================
+   Sidebar Column & Kartu Pengunjung
+   ========================================================================== */
+.sidebar-column {
+  position: sticky;
+  top: 24px;
+}
+
+.auth-prompt-card {
+  text-align: center;
+  padding: 28px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.prompt-icon {
+  font-size: 2.8rem;
+  background: var(--primary-light);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.auth-prompt-card h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.prompt-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.prompt-info-box {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  text-align: left;
+  line-height: 1.5;
+}
+
+.prompt-subtext {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+/* ==========================================================================
    Form Tambah Buku
    ========================================================================== */
 .form-card {
-  position: sticky;
-  top: 24px;
+  /* Diatur oleh sidebar-column */
 }
 
 .form-group {

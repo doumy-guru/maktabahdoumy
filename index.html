@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#4f46e5">
-  <title>Koleksi Buku Pribadi</title>
+  <title>Koleksi Buku Pribadi - Maktabah Doumy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,11 +19,11 @@
           <div class="header-icon">📚</div>
           <div class="header-text-group">
             <h1>Koleksi Buku Pribadi</h1>
-            <p class="subtitle">Kelola dan pantau progres membaca buku koleksi Anda secara online</p>
+            <p class="subtitle">Katalog perpustakaan & koleksi buku pribadi Maktabah Doumy</p>
             <div class="header-badges">
               <span id="sync-badge" class="sync-badge status-offline">
                 <span id="sync-dot" class="sync-dot"></span>
-                <span id="sync-text">Mode Offline (LocalStorage)</span>
+                <span id="sync-text">Memeriksa koneksi...</span>
               </span>
             </div>
           </div>
@@ -38,7 +38,7 @@
           <div id="user-profile" class="user-profile hidden">
             <div class="user-avatar" id="user-avatar">👤</div>
             <div class="user-info">
-              <span class="user-name" id="user-name">Pengguna</span>
+              <span class="user-name" id="user-name">Pemilik</span>
               <span class="user-email" id="user-email"></span>
             </div>
             <button type="button" id="btn-logout" class="btn btn-sm btn-logout" title="Keluar dari akun">
@@ -83,60 +83,80 @@
 
     <!-- Layout Utama: Form Tambah & Daftar Buku -->
     <main class="main-layout">
-      <!-- Form Tambah Buku -->
-      <section class="card form-card">
-        <div class="card-header">
-          <h2>Tambah Buku Baru</h2>
-          <p>Masukkan data buku yang ingin ditambahkan ke koleksi.</p>
-        </div>
-
-        <form id="book-form" novalidate>
-          <div class="form-group">
-            <label for="book-title">Judul Buku <span class="required">*</span></label>
-            <input 
-              type="text" 
-              id="book-title" 
-              name="title" 
-              placeholder="Contoh: Filosofi Teras" 
-              autocomplete="off" 
-              required
-            >
-            <span class="error-msg" id="title-error"></span>
+      <!-- Kolom Kiri: Form Pemilik atau Sambutan Pengunjung -->
+      <aside class="sidebar-column">
+        <!-- 1. Form Tambah Buku (HANYA MUNCUL JIKA SUDAH LOGIN SEBAGAI PEMILIK) -->
+        <section class="card form-card hidden" id="form-card">
+          <div class="card-header">
+            <h2>Tambah Buku Baru</h2>
+            <p>Masukkan data buku yang ingin ditambahkan ke koleksi.</p>
           </div>
 
-          <div class="form-group">
-            <label for="book-author">Penulis <span class="required">*</span></label>
-            <input 
-              type="text" 
-              id="book-author" 
-              name="author" 
-              placeholder="Contoh: Henry Manampiring" 
-              autocomplete="off" 
-              required
-            >
-            <span class="error-msg" id="author-error"></span>
+          <form id="book-form" novalidate>
+            <div class="form-group">
+              <label for="book-title">Judul Buku <span class="required">*</span></label>
+              <input 
+                type="text" 
+                id="book-title" 
+                name="title" 
+                placeholder="Contoh: Filosofi Teras" 
+                autocomplete="off" 
+                required
+              >
+              <span class="error-msg" id="title-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="book-author">Penulis <span class="required">*</span></label>
+              <input 
+                type="text" 
+                id="book-author" 
+                name="author" 
+                placeholder="Contoh: Henry Manampiring" 
+                autocomplete="off" 
+                required
+              >
+              <span class="error-msg" id="author-error"></span>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label" for="book-is-read">
+                <input type="checkbox" id="book-is-read" name="isRead">
+                <span class="custom-checkbox"></span>
+                <span>Tandai sudah selesai dibaca</span>
+              </label>
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn btn-primary btn-block">
+              <span class="btn-icon">➕</span> Tambah ke Koleksi
+            </button>
+          </form>
+        </section>
+
+        <!-- 2. Kartu Pengunjung (MUNCUL JIKA BELUM LOGIN) -->
+        <section class="card auth-prompt-card" id="auth-prompt-card">
+          <div class="prompt-icon">📚</div>
+          <h2>Katalog Koleksi Pribadi</h2>
+          <p class="prompt-desc">Selamat datang! Ini adalah katalog buku koleksi pribadi Maktabah Doumy.</p>
+          
+          <div class="prompt-info-box">
+            <p>🔍 <strong>Pengunjung Umum:</strong> Anda dapat menjelajahi daftar buku, melihat status baca, ketersediaan peminjaman, serta membaca catatan dan ulasan buku.</p>
           </div>
 
-          <div class="form-group checkbox-group">
-            <label class="checkbox-label" for="book-is-read">
-              <input type="checkbox" id="book-is-read" name="isRead">
-              <span class="custom-checkbox"></span>
-              <span>Tandai sudah selesai dibaca</span>
-            </label>
-          </div>
-
-          <button type="submit" id="submit-btn" class="btn btn-primary">
-            <span class="btn-icon">➕</span> Tambah ke Koleksi
+          <p class="prompt-subtext">Hanya pemilik yang dapat menambah buku baru atau mengubah status peminjaman.</p>
+          
+          <button type="button" id="btn-login-prompt" class="btn btn-primary btn-block">
+            <span>🔐</span> Masuk sebagai Pemilik
           </button>
-        </form>
-      </section>
+        </section>
+      </aside>
 
-      <!-- Daftar Buku -->
+      <!-- Kolom Kanan: Daftar Buku -->
       <section class="card collection-card">
         <div class="card-header collection-header">
           <div>
-            <h2>Daftar Buku</h2>
-            <p>Daftar seluruh buku yang tersimpan dalam koleksi.</p>
+            <h2>Daftar Koleksi</h2>
+            <p id="collection-subtext">Menampilkan seluruh koleksi buku yang tersimpan.</p>
           </div>
 
           <!-- Filter Status -->
@@ -155,7 +175,7 @@
             <input 
               type="text" 
               id="search-input" 
-              placeholder="Cari judul buku atau penulis..." 
+              placeholder="Cari judul buku, penulis, atau nama peminjam..." 
               autocomplete="off" 
               aria-label="Cari judul buku atau penulis"
             >
@@ -170,7 +190,7 @@
         <div id="empty-state" class="empty-state hidden">
           <div class="empty-icon">📭</div>
           <h3>Belum Ada Buku</h3>
-          <p id="empty-text">Koleksi Anda masih kosong. Mulai tambahkan buku pertama Anda menggunakan formulir di sebelah kiri!</p>
+          <p id="empty-text">Koleksi masih kosong.</p>
         </div>
       </section>
     </main>
@@ -186,7 +206,7 @@
         </div>
 
         <div class="modal-body">
-          <p class="modal-auth-note">Aplikasi koleksi pribadi. Hanya pemilik yang dapat masuk untuk mengelola data koleksi buku.</p>
+          <p class="modal-auth-note">Aplikasi koleksi pribadi. Hanya pemilik yang dapat masuk untuk mengelola data buku.</p>
 
           <!-- Alert Pesan Error Auth -->
           <div id="auth-error-alert" class="alert alert-danger hidden"></div>
@@ -218,7 +238,7 @@
               <span class="social-icon">🌐</span> Masuk dengan Akun Google Pemilik
             </button>
             <button type="button" id="btn-guest-login" class="btn btn-social btn-guest">
-              <span class="social-icon">👤</span> Masuk sebagai Tamu (Mode Offline)
+              <span class="social-icon">👤</span> Masuk sebagai Tamu (Mode Demo / Offline)
             </button>
           </div>
         </div>
@@ -318,10 +338,15 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>Aplikasi Koleksi Buku Pribadi &bull; Didukung oleh Firebase Cloud Firestore, Authentication &amp; GitHub Pages</p>
+      <p>Aplikasi Koleksi Buku Pribadi &bull; Maktabah Doumy &bull; Didukung oleh Firebase &amp; GitHub Pages</p>
     </footer>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <!-- Firebase SDK Compat (Kompatibel 100% dengan protokol file:// lokal maupun https:// GitHub Pages) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

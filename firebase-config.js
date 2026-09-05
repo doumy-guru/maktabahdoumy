@@ -1,35 +1,10 @@
 /**
  * Konfigurasi Firebase, Cloud Firestore, dan Firebase Authentication
+ * Menggunakan Firebase Compat SDK agar berjalan mulus tanpa masalah CORS baik saat
+ * dibuka langsung (protokol file://) maupun saat di-deploy secara online (https://).
  */
 
-// Import SDK Firebase modular melalui CDN resmi Google
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy,
-  serverTimestamp 
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged,
-  signInAnonymously,
-  updateProfile
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-// Konfigurasi Firebase project
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyBjW9T-yz4kg6W97hcXZ1uWCdGnDSDTpUA",
   authDomain: "maktabahdoumy.firebaseapp.com",
   projectId: "maktabahdoumy",
@@ -39,11 +14,12 @@ export const firebaseConfig = {
 };
 
 /**
- * Mengecek apakah konfigurasi Firebase valid dan bukan placeholder
+ * Memeriksa apakah SDK Firebase tersedia dan konfigurasi project telah diisi
  * @returns {boolean}
  */
-export function isFirebaseConfigured() {
+function isFirebaseConfigured() {
   return (
+    typeof firebase !== 'undefined' &&
     Boolean(firebaseConfig.projectId) &&
     !firebaseConfig.projectId.includes("GANTI_DENGAN") &&
     Boolean(firebaseConfig.apiKey) &&
@@ -51,44 +27,22 @@ export function isFirebaseConfigured() {
   );
 }
 
-// Inisialisasi Firebase, Firestore, dan Auth
-let app = null;
 let db = null;
 let auth = null;
-const googleProvider = new GoogleAuthProvider();
+let googleProvider = null;
 
 if (isFirebaseConfigured()) {
   try {
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    auth = getAuth(app);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.firestore();
+    auth = firebase.auth();
+    googleProvider = new firebase.auth.GoogleAuthProvider();
     console.log("🔥 Firebase Cloud Firestore & Auth berhasil diinisialisasi.");
   } catch (error) {
     console.error("Gagal menginisialisasi Firebase:", error);
   }
 } else {
-  console.info("ℹ️ Firebase belum dikonfigurasi. Aplikasi berjalan dalam mode LocalStorage.");
+  console.info("ℹ️ Firebase belum terhubung. Aplikasi menggunakan mode LocalStorage.");
 }
-
-export { 
-  app,
-  db, 
-  auth,
-  googleProvider,
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy,
-  serverTimestamp,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  signInAnonymously,
-  updateProfile
-};
