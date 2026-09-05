@@ -6,10 +6,13 @@ Aplikasi web modern, dinamis, dan *mobile-friendly* untuk mencatat koleksi buku 
 
 ## ✨ Fitur Utama
 
-- ☁️ **Cloud Real-Time Sync**: Terhubung ke Firebase Cloud Firestore. Setiap perubahan status buku atau penambahan buku di ponsel akan langsung tersinkronisasi otomatis di laptop atau perangkat lain secara instan (*real-time*).
-- 💾 **Hybrid / Graceful Offline Fallback**: Jika Firebase belum dikonfigurasi atau jaringan offline, aplikasi otomatis beralih ke penyimpanan lokal browser (**LocalStorage**) tanpa galat.
-- 📱 **Mobile-First & Touch Optimized**: Dirancang dengan target sentuh tombol minimal 44px, pencegahan *auto-zoom* iOS Safari, serta tata letak kartu yang nyaman dioperasikan satu tangan.
-- 🔍 **Pencarian & Filter Instan**: Bilah pencarian *real-time* (judul atau nama penulis) dan tab penyaringan status (*Semua*, *Belum Dibaca*, *Selesai*).
+- 🔐 **Autentikasi Pengguna (Login & Logout)**: Mendukung login dengan Email & Password, Google Sign-In, dan Mode Tamu (Guest) yang fleksibel baik saat online maupun offline.
+- 🤝 **Tracking Peminjaman Buku**: Pantau buku yang sedang dipinjamkan, catat nama peminjam dan target tanggal pengembalian, serta kembalikan buku dengan sekali klik.
+- ⭐ **Catatan & Review Buku**: Berikan rating bintang (1-5 ⭐) dan simpan catatan, ringkasan, atau ulasan mendalam pada buku yang telah selesai dibaca.
+- ☁️ **Cloud Real-Time Sync**: Terhubung ke Firebase Cloud Firestore. Setiap perubahan status buku atau peminjaman langsung tersinkronisasi otomatis antar perangkat secara instan (*real-time*).
+- 💾 **Hybrid / Graceful Offline Fallback**: Jika jaringan offline atau Firebase belum diaktifkan, aplikasi otomatis beralih ke penyimpanan lokal browser (**LocalStorage**) tanpa galat.
+- 📱 **Mobile-First & Touch Optimized**: Dirancang dengan target sentuh tombol minimal 44px, pencegahan *auto-zoom* iOS Safari, serta modal responsif di layar ponsel.
+- 🔍 **Pencarian & Filter Instan**: Bilah pencarian *real-time* (judul, nama penulis, nama peminjam) dan filter status (*Semua*, *Belum Dibaca*, *Selesai*, *Dipinjam*).
 - 🚀 **Siap Deploy ke GitHub Pages**: Struktur berkas statis terintegrasi dengan **GitHub Actions** untuk deployment otomatis setiap kali melakukan `git push`.
 
 ---
@@ -35,8 +38,13 @@ Aplikasi web modern, dinamis, dan *mobile-friendly* untuk mencatat koleksi buku 
    >   }
    > }
    > ```
-6. Di halaman beranda Project Overview, klik ikon Web **`</>`** untuk mendaftarkan Web App.
-7. Salin konfigurasi objek `firebaseConfig` yang ditampilkan.
+6. **Aktivasi Firebase Authentication:**
+   - Di menu sebelah kiri, pilih **Build > Authentication**, lalu klik **Get Started**.
+   - Pada tab **Sign-in method**, aktifkan penyedia yang ingin digunakan:
+     - **Email/Password**: Aktifkan toggle Email/Password lalu simpan.
+     - **Google**: Aktifkan toggle Google, masukkan email dukungan proyek, lalu simpan.
+     - **Anonymous**: Aktifkan opsi Anonymous untuk mode tamu.
+   - Pada tab **Settings > Authorized domains**, pastikan `localhost` serta domain GitHub Pages Anda (`<username>.github.io`) sudah terdaftar dalam daftar domain yang diizinkan.
 
 ---
 

@@ -1,11 +1,5 @@
 /**
- * Konfigurasi Firebase & Cloud Firestore
- *
- * PANDUAN PENGISIAN:
- * 1. Buka Firebase Console (https://console.firebase.google.com/)
- * 2. Buat Project baru atau pilih project yang sudah ada.
- * 3. Tambahkan Web App (ikon </>) lalu salin objek `firebaseConfig` ke bawah ini.
- * 4. Aktifkan Cloud Firestore di menu "Build > Firestore Database" (Pilih Start in Test Mode).
+ * Konfigurasi Firebase, Cloud Firestore, dan Firebase Authentication
  */
 
 // Import SDK Firebase modular melalui CDN resmi Google
@@ -22,8 +16,19 @@ import {
   orderBy,
   serverTimestamp 
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged,
+  signInAnonymously,
+  updateProfile
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-// Salin konfigurasi Firebase project Anda di sini:
+// Konfigurasi Firebase project
 export const firebaseConfig = {
   apiKey: "AIzaSyBjW9T-yz4kg6W97hcXZ1uWCdGnDSDTpUA",
   authDomain: "maktabahdoumy.firebaseapp.com",
@@ -34,27 +39,30 @@ export const firebaseConfig = {
 };
 
 /**
- * Mengecek apakah pengguna telah mengisi konfigurasi Firebase yang valid
+ * Mengecek apakah konfigurasi Firebase valid dan bukan placeholder
  * @returns {boolean}
  */
 export function isFirebaseConfigured() {
   return (
     Boolean(firebaseConfig.projectId) &&
-    firebaseConfig.projectId !== "maktabahdoumy" &&
+    !firebaseConfig.projectId.includes("GANTI_DENGAN") &&
     Boolean(firebaseConfig.apiKey) &&
-    firebaseConfig.apiKey !== "AIzaSyBjW9T-yz4kg6W97hcXZ1uWCdGnDSDTpUA"
+    !firebaseConfig.apiKey.includes("GANTI_DENGAN")
   );
 }
 
-// Inisialisasi Firebase & Firestore jika konfigurasi sudah diisi
+// Inisialisasi Firebase, Firestore, dan Auth
 let app = null;
 let db = null;
+let auth = null;
+const googleProvider = new GoogleAuthProvider();
 
 if (isFirebaseConfigured()) {
   try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-    console.log("🔥 Firebase Cloud Firestore berhasil diinisialisasi.");
+    auth = getAuth(app);
+    console.log("🔥 Firebase Cloud Firestore & Auth berhasil diinisialisasi.");
   } catch (error) {
     console.error("Gagal menginisialisasi Firebase:", error);
   }
@@ -63,7 +71,10 @@ if (isFirebaseConfigured()) {
 }
 
 export { 
+  app,
   db, 
+  auth,
+  googleProvider,
   collection, 
   addDoc, 
   onSnapshot, 
@@ -72,5 +83,12 @@ export {
   doc, 
   query, 
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  signInAnonymously,
+  updateProfile
 };

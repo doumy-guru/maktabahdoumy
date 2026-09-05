@@ -15,15 +15,35 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-content">
-        <div class="header-icon">📚</div>
-        <div class="header-text-group">
-          <h1>Koleksi Buku Pribadi</h1>
-          <p class="subtitle">Kelola dan pantau progres membaca buku koleksi Anda secara online</p>
-          <div class="header-badges">
-            <span id="sync-badge" class="sync-badge status-offline">
-              <span id="sync-dot" class="sync-dot"></span>
-              <span id="sync-text">Mode Offline (LocalStorage)</span>
-            </span>
+        <div class="header-brand">
+          <div class="header-icon">📚</div>
+          <div class="header-text-group">
+            <h1>Koleksi Buku Pribadi</h1>
+            <p class="subtitle">Kelola dan pantau progres membaca buku koleksi Anda secara online</p>
+            <div class="header-badges">
+              <span id="sync-badge" class="sync-badge status-offline">
+                <span id="sync-dot" class="sync-dot"></span>
+                <span id="sync-text">Mode Offline (LocalStorage)</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profil Pengguna & Tombol Auth -->
+        <div class="header-auth" id="header-auth">
+          <button type="button" id="btn-open-auth" class="btn btn-outline btn-auth">
+            <span>🔐</span> Masuk / Daftar
+          </button>
+          
+          <div id="user-profile" class="user-profile hidden">
+            <div class="user-avatar" id="user-avatar">👤</div>
+            <div class="user-info">
+              <span class="user-name" id="user-name">Pengguna</span>
+              <span class="user-email" id="user-email"></span>
+            </div>
+            <button type="button" id="btn-logout" class="btn btn-sm btn-logout" title="Keluar dari akun">
+              <span>🚪</span> Keluar
+            </button>
           </div>
         </div>
       </div>
@@ -50,6 +70,13 @@
         <div class="stat-info">
           <span class="stat-label">Selesai Dibaca</span>
           <span id="stat-read" class="stat-value">0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon borrow-icon">🤝</div>
+        <div class="stat-info">
+          <span class="stat-label">Sedang Dipinjam</span>
+          <span id="stat-borrowed" class="stat-value">0</span>
         </div>
       </div>
     </section>
@@ -117,6 +144,7 @@
             <button type="button" class="filter-btn active" data-filter="all">Semua</button>
             <button type="button" class="filter-btn" data-filter="unread">Belum Dibaca</button>
             <button type="button" class="filter-btn" data-filter="read">Selesai</button>
+            <button type="button" class="filter-btn" data-filter="borrowed">Dipinjam</button>
           </div>
         </div>
 
@@ -147,12 +175,154 @@
       </section>
     </main>
 
+    <!-- ==========================================================================
+         MODAL 1: Autentikasi Pengguna (Login & Register)
+         ========================================================================== -->
+    <div id="modal-auth" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="auth-modal-title">Masuk ke Akun Anda</h3>
+          <button type="button" class="modal-close-btn" data-close="modal-auth" aria-label="Tutup modal">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Tab Auth: Masuk vs Daftar -->
+          <div class="auth-tabs">
+            <button type="button" id="tab-login" class="auth-tab-btn active">Masuk</button>
+            <button type="button" id="tab-register" class="auth-tab-btn">Daftar Akun</button>
+          </div>
+
+          <!-- Alert Pesan Error Auth -->
+          <div id="auth-error-alert" class="alert alert-danger hidden"></div>
+
+          <!-- Form Email & Password -->
+          <form id="auth-form">
+            <div class="form-group">
+              <label for="auth-email">Alamat Email <span class="required">*</span></label>
+              <input type="email" id="auth-email" placeholder="nama@email.com" autocomplete="email" required>
+            </div>
+
+            <div class="form-group">
+              <label for="auth-password">Kata Sandi <span class="required">*</span></label>
+              <input type="password" id="auth-password" placeholder="Minimal 6 karakter" autocomplete="current-password" required>
+            </div>
+
+            <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
+              Masuk Sekarang
+            </button>
+          </form>
+
+          <div class="auth-divider">
+            <span>atau</span>
+          </div>
+
+          <!-- Tombol Google & Guest -->
+          <div class="auth-extra-actions">
+            <button type="button" id="btn-google-login" class="btn btn-social btn-google">
+              <span class="social-icon">🌐</span> Masuk dengan Google
+            </button>
+            <button type="button" id="btn-guest-login" class="btn btn-social btn-guest">
+              <span class="social-icon">👤</span> Lanjutkan sebagai Tamu (Mode Offline)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 2: Tracking Peminjaman Buku
+         ========================================================================== -->
+    <div id="modal-loan" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="loan-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="loan-modal-title">🤝 Pinjamkan Buku</h3>
+          <button type="button" class="modal-close-btn" data-close="modal-loan" aria-label="Tutup modal">✕</button>
+        </div>
+
+        <form id="loan-form">
+          <div class="modal-body">
+            <p class="modal-subtitle" id="loan-book-title-display">Judul Buku</p>
+            <input type="hidden" id="loan-book-id">
+
+            <div class="form-group">
+              <label for="borrower-name">Nama Peminjam <span class="required">*</span></label>
+              <input type="text" id="borrower-name" placeholder="Contoh: Budi Santoso" autocomplete="off" required>
+              <span class="error-msg" id="borrower-name-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="borrow-date">Tanggal Pinjam <span class="required">*</span></label>
+              <input type="date" id="borrow-date" required>
+            </div>
+
+            <div class="form-group">
+              <label for="return-deadline">Batas Tanggal Pengembalian</label>
+              <input type="date" id="return-deadline">
+              <small class="form-hint">Opsional: batas target pengembalian buku.</small>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-close="modal-loan">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan Peminjaman</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 3: Catatan & Review Buku
+         ========================================================================== -->
+    <div id="modal-review" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="review-modal-title">📝 Catatan & Review Buku</h3>
+          <button type="button" class="modal-close-btn" data-close="modal-review" aria-label="Tutup modal">✕</button>
+        </div>
+
+        <form id="review-form">
+          <div class="modal-body">
+            <p class="modal-subtitle" id="review-book-title-display">Judul Buku</p>
+            <input type="hidden" id="review-book-id">
+
+            <!-- Pemilihan Bintang Rating -->
+            <div class="form-group">
+              <label>Rating Buku</label>
+              <div class="star-rating" id="star-rating-container" role="radiogroup" aria-label="Rating Buku">
+                <button type="button" class="star-btn" data-star="1" aria-label="1 Bintang">★</button>
+                <button type="button" class="star-btn" data-star="2" aria-label="2 Bintang">★</button>
+                <button type="button" class="star-btn" data-star="3" aria-label="3 Bintang">★</button>
+                <button type="button" class="star-btn" data-star="4" aria-label="4 Bintang">★</button>
+                <button type="button" class="star-btn" data-star="5" aria-label="5 Bintang">★</button>
+              </div>
+              <span id="star-rating-text" class="rating-text-desc">Pilih rating (opsional)</span>
+            </div>
+
+            <!-- Teks Catatan / Review -->
+            <div class="form-group">
+              <label for="review-text">Catatan / Ulasan Buku</label>
+              <textarea 
+                id="review-text" 
+                rows="5" 
+                placeholder="Tuliskan catatan membaca, ringkasan, kutipan menarik, atau ulasan pribadi Anda mengenai buku ini..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-close="modal-review">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan Review</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Toast Notifikasi -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>Aplikasi Koleksi Buku Pribadi &bull; Didukung oleh Firebase Cloud Firestore &amp; GitHub Pages</p>
+      <p>Aplikasi Koleksi Buku Pribadi &bull; Didukung oleh Firebase Cloud Firestore, Authentication &amp; GitHub Pages</p>
     </footer>
   </div>
 
