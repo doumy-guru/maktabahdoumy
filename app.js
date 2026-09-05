@@ -167,7 +167,12 @@ function updateAuthUI(user) {
     // Tampilkan Form Tambah Buku, Sembunyikan Sambutan Pengunjung
     if (formCard) formCard.classList.remove('hidden');
     if (authPromptCard) authPromptCard.classList.add('hidden');
-    if (collectionSubtext) collectionSubtext.textContent = 'Mode Pemilik: Anda dapat menambah, mengubah, meminjamkan, dan menghapus buku.';
+    if (collectionSubtext) collectionSubtext.textContent = 'Mode Pengelola: Anda dapat menambah buku, mengelola peminjaman, mencatat status baca, dan menulis ulasan.';
+
+    // Tampilkan elemen khusus pemilik (Statistik baca & Filter status baca)
+    document.querySelectorAll('.owner-only-stat, .owner-only-filter').forEach(el => {
+      el.classList.remove('hidden');
+    });
 
     const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Pemilik');
     if (userName) userName.textContent = displayName;
@@ -188,14 +193,31 @@ function updateAuthUI(user) {
     // Sembunyikan Form Tambah Buku, Tampilkan Sambutan Pengunjung
     if (formCard) formCard.classList.add('hidden');
     if (authPromptCard) authPromptCard.classList.remove('hidden');
-    if (collectionSubtext) collectionSubtext.textContent = 'Katalog Publik: Menampilkan seluruh koleksi buku yang tersimpan.';
+    if (collectionSubtext) collectionSubtext.textContent = 'Katalog Pustaka: Jelajahi khazanah koleksi buku Maktabah Doumy.';
+
+    // Sembunyikan elemen khusus pemilik (Statistik baca & Filter status baca)
+    document.querySelectorAll('.owner-only-stat, .owner-only-filter').forEach(el => {
+      el.classList.add('hidden');
+    });
+
+    // Jika filter yang aktif sebelum logout adalah filter baca privat, kembalikan ke 'all'
+    if (currentFilter === 'unread' || currentFilter === 'read') {
+      currentFilter = 'all';
+      filterButtons.forEach(btn => {
+        if (btn.dataset.filter === 'all') {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
 
     if (userName) userName.textContent = '';
     if (userEmail) userEmail.textContent = '';
     if (userAvatar) userAvatar.textContent = '👤';
   }
 
-  // Re-render buku agar tombol aksi disesuaikan dengan hak akses
+  // Re-render buku agar badge status baca dan tombol aksi disesuaikan dengan hak akses
   renderBooks();
 }
 
@@ -551,13 +573,15 @@ function createBookElement(book) {
   const metaDiv = document.createElement('div');
   metaDiv.className = 'book-meta';
 
-  // Badge Status Baca
-  const readBadge = document.createElement('span');
-  readBadge.className = `status-badge ${book.isRead ? 'status-read' : 'status-unread'}`;
-  readBadge.textContent = book.isRead ? '✓ Selesai Dibaca' : '⏳ Belum Dibaca';
-  metaDiv.appendChild(readBadge);
+  // Badge Status Baca: HANYA TAMPIL JIKA PEMILIK SUDAH LOGIN!
+  if (currentUser) {
+    const readBadge = document.createElement('span');
+    readBadge.className = `status-badge ${book.isRead ? 'status-read' : 'status-unread'}`;
+    readBadge.textContent = book.isRead ? '✓ Selesai Dibaca' : '⏳ Belum Dibaca';
+    metaDiv.appendChild(readBadge);
+  }
 
-  // Badge Status Pinjam
+  // Badge Status Pinjam / Ketersediaan: Tampil untuk Publik dan Pemilik
   const loanBadge = document.createElement('span');
   loanBadge.className = `status-badge ${book.isBorrowed ? 'status-borrowed' : 'status-available'}`;
   loanBadge.textContent = book.isBorrowed ? '🤝 Sedang Dipinjam' : '🟢 Tersedia';

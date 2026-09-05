@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#4f46e5">
-  <title>Koleksi Buku Pribadi - Maktabah Doumy</title>
+  <meta name="theme-color" content="#154734">
+  <title>Koleksi Buku Maktabah Doumy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,10 +16,10 @@
     <header class="app-header">
       <div class="header-content">
         <div class="header-brand">
-          <div class="header-icon">📚</div>
+          <div class="header-icon">📖</div>
           <div class="header-text-group">
-            <h1>Koleksi Buku Pribadi</h1>
-            <p class="subtitle">Katalog perpustakaan & koleksi buku pribadi Maktabah Doumy</p>
+            <h1>Koleksi Buku Maktabah Doumy</h1>
+            <p class="subtitle">Khazanah Pustaka &amp; Literasi Pribadi</p>
             <div class="header-badges">
               <span id="sync-badge" class="sync-badge status-offline">
                 <span id="sync-dot" class="sync-dot"></span>
@@ -52,21 +52,22 @@
     <!-- Ringkasan Statistik -->
     <section class="stats-grid" aria-label="Statistik Koleksi Buku">
       <div class="stat-card">
-        <div class="stat-icon total-icon">📖</div>
+        <div class="stat-icon total-icon">📚</div>
         <div class="stat-info">
           <span class="stat-label">Total Buku</span>
           <span id="stat-total" class="stat-value">0</span>
         </div>
       </div>
-      <div class="stat-card">
+      <!-- Statistik Khusus Pemilik (Disembunyikan pada Tampilan Publik) -->
+      <div class="stat-card owner-only-stat hidden">
         <div class="stat-icon unread-icon">⏳</div>
         <div class="stat-info">
           <span class="stat-label">Belum Dibaca</span>
           <span id="stat-unread" class="stat-value">0</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon read-icon">✅</div>
+      <div class="stat-card owner-only-stat hidden">
+        <div class="stat-icon read-icon">📜</div>
         <div class="stat-info">
           <span class="stat-label">Selesai Dibaca</span>
           <span id="stat-read" class="stat-value">0</span>
@@ -89,7 +90,7 @@
         <section class="card form-card hidden" id="form-card">
           <div class="card-header">
             <h2>Tambah Buku Baru</h2>
-            <p>Masukkan data buku yang ingin ditambahkan ke koleksi.</p>
+            <p>Masukkan data buku yang ingin ditambahkan ke koleksi pustaka.</p>
           </div>
 
           <form id="book-form" novalidate>
@@ -99,7 +100,7 @@
                 type="text" 
                 id="book-title" 
                 name="title" 
-                placeholder="Contoh: Filosofi Teras" 
+                placeholder="Contoh: Muqaddimah" 
                 autocomplete="off" 
                 required
               >
@@ -112,7 +113,7 @@
                 type="text" 
                 id="book-author" 
                 name="author" 
-                placeholder="Contoh: Henry Manampiring" 
+                placeholder="Contoh: Ibnu Khaldun" 
                 autocomplete="off" 
                 required
               >
@@ -128,22 +129,22 @@
             </div>
 
             <button type="submit" id="submit-btn" class="btn btn-primary btn-block">
-              <span class="btn-icon">➕</span> Tambah ke Koleksi
+              <span class="btn-icon">➕</span> Tambah ke Pustaka
             </button>
           </form>
         </section>
 
         <!-- 2. Kartu Pengunjung (MUNCUL JIKA BELUM LOGIN) -->
         <section class="card auth-prompt-card" id="auth-prompt-card">
-          <div class="prompt-icon">📚</div>
-          <h2>Katalog Koleksi Pribadi</h2>
-          <p class="prompt-desc">Selamat datang! Ini adalah katalog buku koleksi pribadi Maktabah Doumy.</p>
+          <div class="prompt-icon">🏛️</div>
+          <h2>Katalog Maktabah Doumy</h2>
+          <p class="prompt-desc">Selamat datang di katalog pustaka Maktabah Doumy. Khazanah literasi dan koleksi bacaan pribadi.</p>
           
           <div class="prompt-info-box">
-            <p>🔍 <strong>Pengunjung Umum:</strong> Anda dapat menjelajahi daftar buku, melihat status baca, ketersediaan peminjaman, serta membaca catatan dan ulasan buku.</p>
+            <p>📖 <strong>Pengunjung:</strong> Anda dapat menelusuri seluruh koleksi buku, memeriksa ketersediaan peminjaman, serta membaca catatan dan ulasan literasi yang telah dibagikan.</p>
           </div>
 
-          <p class="prompt-subtext">Hanya pemilik yang dapat menambah buku baru atau mengubah status peminjaman.</p>
+          <p class="prompt-subtext">Masuk ke akun pemilik untuk mengelola koleksi, mencatat kemajuan baca, dan meminjamkan buku.</p>
           
           <button type="button" id="btn-login-prompt" class="btn btn-primary btn-block">
             <span>🔐</span> Masuk sebagai Pemilik
@@ -156,15 +157,15 @@
         <div class="card-header collection-header">
           <div>
             <h2>Daftar Koleksi</h2>
-            <p id="collection-subtext">Menampilkan seluruh koleksi buku yang tersimpan.</p>
+            <p id="collection-subtext">Khazanah pustaka dan koleksi buku Maktabah Doumy.</p>
           </div>
 
           <!-- Filter Status -->
           <div class="filter-group" role="tablist" aria-label="Filter status buku">
-            <button type="button" class="filter-btn active" data-filter="all">Semua</button>
-            <button type="button" class="filter-btn" data-filter="unread">Belum Dibaca</button>
-            <button type="button" class="filter-btn" data-filter="read">Selesai</button>
-            <button type="button" class="filter-btn" data-filter="borrowed">Dipinjam</button>
+            <button type="button" class="filter-btn active" data-filter="all">Semua Koleksi</button>
+            <button type="button" class="filter-btn owner-only-filter hidden" data-filter="unread">Belum Dibaca</button>
+            <button type="button" class="filter-btn owner-only-filter hidden" data-filter="read">Selesai</button>
+            <button type="button" class="filter-btn" data-filter="borrowed">Sedang Dipinjam</button>
           </div>
         </div>
 
@@ -338,7 +339,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>Aplikasi Koleksi Buku Pribadi &bull; Maktabah Doumy &bull; Didukung oleh Firebase &amp; GitHub Pages</p>
+      <p>Koleksi Buku Maktabah Doumy &bull; Khazanah Literasi &amp; Pustaka Pribadi</p>
     </footer>
   </div>
 

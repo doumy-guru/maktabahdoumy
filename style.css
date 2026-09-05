@@ -1,51 +1,66 @@
 /* ==========================================================================
-   Variabel Desain & Palet Warna
+   Variabel Desain & Palet Warna - Maktabah Doumy (Tema Literasi & Pustaka)
    ========================================================================== */
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: #eef2ff;
+  /* Nuansa Hijau Zamrud / Deep Pine (Klasik & Lambang Ilmu Pengetahuan) */
+  --primary: #154734;
+  --primary-hover: #0e3325;
+  --primary-light: #edf5f1;
+  --primary-border: #b7d8c7;
   
-  --bg-main: #f8fafc;
+  /* Aksen Emas Antik / Warm Gold (Hiasan Jilid Buku Klasik) */
+  --accent-gold: #c59b27;
+  --accent-gold-hover: #ad851c;
+  --accent-gold-light: #fdf9ee;
+  --accent-gold-border: #e9d79e;
+
+  /* Latar Kertas & Perkamen Halus (Warm Parchment / Ivory) */
+  --bg-main: #fbfaf7;
   --bg-card: #ffffff;
+  --bg-subtle: #f5f2eb;
   --bg-input: #ffffff;
 
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
+  /* Tinta & Tipografi */
+  --text-primary: #1c2526;
+  --text-secondary: #586574;
+  --text-muted: #8c97a4;
 
-  --border-color: #e2e8f0;
-  --border-focus: #818cf8;
+  --border-color: #e6e1d6;
+  --border-focus: #154734;
 
-  --danger: #ef4444;
-  --danger-hover: #dc2626;
+  /* Status Indikator */
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
   --danger-light: #fef2f2;
   --danger-border: #fecaca;
 
-  --success: #10b981;
-  --success-light: #ecfdf5;
-  --success-text: #065f46;
-  --success-border: #a7f3d0;
+  --success: #15803d;
+  --success-light: #f0fdf4;
+  --success-text: #166534;
+  --success-border: #bbf7d0;
 
-  --warning: #f59e0b;
+  --warning: #b45309;
   --warning-light: #fffbeb;
   --warning-text: #92400e;
   --warning-border: #fde68a;
 
-  --purple: #8b5cf6;
-  --purple-light: #f5f3ff;
-  --purple-text: #5b21b6;
-  --purple-border: #ddd6fe;
+  /* Status Peminjaman (Warm Terracotta / Amber) */
+  --borrow-color: #9a4208;
+  --borrow-light: #fef3e2;
+  --borrow-border: #fed7aa;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
-  --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 3px 0 rgba(28, 37, 38, 0.04), 0 1px 2px 0 rgba(28, 37, 38, 0.02);
+  --shadow-md: 0 4px 8px -1px rgba(28, 37, 38, 0.07), 0 2px 4px -2px rgba(28, 37, 38, 0.04);
+  --shadow-lg: 0 12px 20px -3px rgba(28, 37, 38, 0.09), 0 4px 6px -4px rgba(28, 37, 38, 0.04);
+  --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
+
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -60,7 +75,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--bg-main);
   color: var(--text-primary);
   line-height: 1.6;
@@ -81,10 +96,23 @@ body {
    ========================================================================== */
 .app-header {
   background: var(--bg-card);
-  padding: 20px 28px;
+  padding: 22px 30px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.app-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 30px;
+  right: 30px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--accent-gold) 50%, var(--primary) 100%);
+  border-radius: var(--radius-full);
+  opacity: 0.85;
 }
 
 .header-content {
@@ -98,32 +126,38 @@ body {
 .header-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 
 .header-icon {
-  font-size: 2.2rem;
-  background: var(--primary-light);
-  width: 56px;
-  height: 56px;
+  font-size: 2rem;
+  background: linear-gradient(135deg, #154734 0%, #1e5e46 100%);
+  color: #f7eed7;
+  border: 1.5px solid var(--accent-gold-border);
+  box-shadow: 0 4px 12px rgba(21, 71, 52, 0.16);
+  width: 58px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   flex-shrink: 0;
 }
 
 .app-header h1 {
-  font-size: 1.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.65rem;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
+  color: var(--primary);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-top: 2px;
+  font-size: 0.92rem;
+  margin-top: 3px;
+  font-weight: 500;
 }
 
 .header-badges {
@@ -284,13 +318,13 @@ body {
    ========================================================================== */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
 .stat-card {
   background: var(--bg-card);
-  padding: 16px 18px;
+  padding: 16px 20px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
@@ -303,22 +337,24 @@ body {
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  border-color: #d8d2c4;
 }
 
 .stat-icon {
-  font-size: 1.4rem;
-  width: 42px;
-  height: 42px;
+  font-size: 1.35rem;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
-.total-icon { background: #f1f5f9; }
-.unread-icon { background: var(--warning-light); }
-.read-icon { background: var(--success-light); }
-.borrow-icon { background: var(--purple-light); }
+.total-icon { background: var(--primary-light); color: var(--primary); }
+.unread-icon { background: var(--warning-light); color: var(--warning-text); }
+.read-icon { background: var(--success-light); color: var(--success-text); }
+.borrow-icon { background: var(--borrow-light); color: var(--borrow-color); }
 
 .stat-info {
   display: flex;
@@ -326,18 +362,19 @@ body {
 }
 
 .stat-label {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 /* ==========================================================================
@@ -370,15 +407,17 @@ body {
 }
 
 .card-header h2 {
-  font-size: 1.25rem;
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--primary);
+  letter-spacing: -0.01em;
 }
 
 .card-header p {
   font-size: 0.88rem;
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 /* ==========================================================================
@@ -394,13 +433,17 @@ body {
   padding: 28px 24px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
+  border-top: 3px solid var(--primary);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
 
 .prompt-icon {
-  font-size: 2.8rem;
-  background: var(--primary-light);
+  font-size: 2.4rem;
+  background: linear-gradient(135deg, var(--primary) 0%, #1e5e46 100%);
+  color: #f7eed7;
+  border: 1.5px solid var(--accent-gold-border);
+  box-shadow: 0 4px 12px rgba(21, 71, 52, 0.16);
   width: 64px;
   height: 64px;
   border-radius: var(--radius-md);
@@ -411,9 +454,10 @@ body {
 }
 
 .auth-prompt-card h2 {
-  font-size: 1.25rem;
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--primary);
   margin-bottom: 8px;
 }
 
@@ -421,19 +465,20 @@ body {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 16px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .prompt-info-box {
-  background: #f8fafc;
+  background: #faf8f2;
   border: 1px solid var(--border-color);
+  border-left: 3px solid var(--accent-gold);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   font-size: 0.85rem;
   color: var(--text-primary);
   margin-bottom: 16px;
   text-align: left;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .prompt-subtext {
@@ -588,7 +633,7 @@ body {
 .btn-primary:hover {
   background: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 12px rgba(21, 71, 52, 0.22);
 }
 
 .btn-primary:active {
@@ -630,16 +675,17 @@ body {
 
 .filter-group {
   display: flex;
-  background: var(--bg-main);
+  background: var(--bg-subtle);
   padding: 4px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   flex-wrap: wrap;
+  gap: 4px;
 }
 
 .filter-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 600;
@@ -650,9 +696,14 @@ body {
   transition: var(--transition);
 }
 
+.filter-btn:hover {
+  color: var(--primary);
+}
+
 .filter-btn.active {
   background: var(--bg-card);
   color: var(--primary);
+  border-color: var(--border-color);
   box-shadow: var(--shadow-sm);
 }
 
@@ -691,7 +742,7 @@ body {
   outline: none;
   border-color: var(--primary);
   background: var(--bg-card);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(21, 71, 52, 0.12);
 }
 
 #search-input::placeholder {
@@ -732,13 +783,15 @@ body {
 .book-item {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary);
   border-radius: var(--radius-md);
-  padding: 18px 20px;
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   transition: var(--transition);
   animation: fadeIn 0.25s ease-out;
+  box-shadow: var(--shadow-sm);
 }
 
 @keyframes fadeIn {
@@ -747,8 +800,10 @@ body {
 }
 
 .book-item:hover {
-  border-color: #cbd5e1;
+  border-color: #d6d0c2;
+  border-left-color: var(--accent-gold);
   box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .book-main-row {
@@ -761,20 +816,24 @@ body {
 .book-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   flex: 1;
   min-width: 0;
 }
 
 .book-title {
-  font-size: 1.1rem;
+  font-family: var(--font-serif);
+  font-size: 1.18rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--primary);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
   word-break: break-word;
 }
 
 .book-author {
-  font-size: 0.88rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -783,8 +842,8 @@ body {
 }
 
 .author-icon {
-  font-size: 0.85rem;
-  opacity: 0.7;
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
 .book-meta {
@@ -800,10 +859,11 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  padding: 3px 10px;
+  padding: 3px 11px;
   border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
 }
 
 .status-unread {
@@ -813,31 +873,32 @@ body {
 }
 
 .status-read {
-  background-color: var(--success-light);
-  color: var(--success-text);
-  border: 1px solid var(--success-border);
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
 }
 
 .status-borrowed {
-  background-color: var(--purple-light);
-  color: var(--purple-text);
-  border: 1px solid var(--purple-border);
+  background-color: var(--borrow-light);
+  color: var(--borrow-color);
+  border: 1px solid var(--borrow-border);
 }
 
 .status-available {
-  background-color: #f1f5f9;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
+  background-color: #f1f8f4;
+  color: #1b5e3a;
+  border: 1px solid #c8e6d2;
 }
 
 /* Info Peminjaman Buku */
 .loan-info-box {
-  background: var(--purple-light);
-  border-left: 3px solid var(--purple);
-  padding: 8px 12px;
+  background: var(--borrow-light);
+  border: 1px solid var(--borrow-border);
+  border-left: 3.5px solid var(--borrow-color);
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
-  color: var(--purple-text);
+  color: var(--borrow-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -846,37 +907,39 @@ body {
 }
 
 .loan-info-text {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .loan-deadline-text {
   font-size: 0.78rem;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 /* Kotak Ulasan / Review Buku */
 .book-review-card {
-  background: #fdfbf7;
-  border: 1px dashed #e2d9cc;
+  background: #faf8f2;
+  border: 1px solid #e8e3d5;
+  border-left: 3.5px solid var(--accent-gold);
   border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  margin-top: 2px;
+  padding: 12px 16px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
 .review-stars-display {
-  color: #f59e0b;
+  color: var(--accent-gold);
   font-size: 1.05rem;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
 }
 
 .review-text-display {
-  font-size: 0.88rem;
-  color: #475569;
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  color: #374151;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.55;
   word-break: break-word;
 }
 
@@ -919,23 +982,23 @@ body {
 }
 
 .btn-loan-action {
-  background: var(--purple-light);
-  border: 1px solid var(--purple-border);
-  color: var(--purple-text);
+  background: var(--borrow-light);
+  border: 1px solid var(--borrow-border);
+  color: var(--borrow-color);
 }
 
 .btn-loan-action:hover {
-  background: #ece7ff;
+  background: #fdecd2;
 }
 
 .btn-review-action {
-  background: #fffbeb;
-  border: 1px solid var(--warning-border);
-  color: #b45309;
+  background: var(--accent-gold-light);
+  border: 1px solid var(--accent-gold-border);
+  color: #926a10;
 }
 
 .btn-review-action:hover {
-  background: #fef3c7;
+  background: #fdf3d6;
 }
 
 .btn-delete {
@@ -994,9 +1057,10 @@ body {
 }
 
 .modal-header h3 {
-  font-size: 1.2rem;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--primary);
 }
 
 .modal-close-btn {
@@ -1209,7 +1273,9 @@ body {
   margin: 0 auto;
 }
 
-.hidden {
+.hidden,
+.owner-only-stat.hidden,
+.owner-only-filter.hidden {
   display: none !important;
 }
 
