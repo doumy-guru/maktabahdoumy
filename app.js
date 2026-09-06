@@ -27,6 +27,7 @@ const btnLoginPrompt = document.getElementById('btn-login-prompt');
 const bookForm = document.getElementById('book-form');
 const titleInput = document.getElementById('book-title');
 const authorInput = document.getElementById('book-author');
+const descriptionInput = document.getElementById('book-description');
 const isReadCheckbox = document.getElementById('book-is-read');
 const titleError = document.getElementById('title-error');
 const authorError = document.getElementById('author-error');
@@ -422,7 +423,10 @@ function loadFromLocalStorage() {
   try {
     const rawData = localStorage.getItem(STORAGE_KEY);
     if (rawData) {
-      books = JSON.parse(rawData);
+      books = JSON.parse(rawData).map(b => ({
+        ...b,
+        description: b.description || ''
+      }));
     } else {
       // Data contoh awal
       books = [
@@ -430,6 +434,7 @@ function loadFromLocalStorage() {
           id: 'sample-1',
           title: 'Filosofi Teras',
           author: 'Henry Manampiring',
+          description: 'Penerbit Kompas, Cetakan ke-33, 346 Halaman',
           isRead: true,
           isBorrowed: false,
           borrowerName: '',
@@ -444,6 +449,7 @@ function loadFromLocalStorage() {
           id: 'sample-2',
           title: 'Atomic Habits',
           author: 'James Clear',
+          description: 'Penerbit Gramedia Pustaka Utama, Edisi Bahasa Indonesia, 352 Halaman',
           isRead: false,
           isBorrowed: true,
           borrowerName: 'Budi Santoso',
@@ -494,6 +500,7 @@ function initializeFirebaseSync() {
           id: docSnap.id,
           title: data.title || '',
           author: data.author || '',
+          description: data.description || '',
           isRead: Boolean(data.isRead),
           isBorrowed: Boolean(data.isBorrowed),
           borrowerName: data.borrowerName || '',
@@ -593,7 +600,25 @@ function createBookElement(book) {
   mainRow.appendChild(detailsDiv);
   item.appendChild(mainRow);
 
-  // 2. Info Peminjaman (Jika sedang dipinjam)
+  // 2. Keterangan / Deskripsi Buku (Edisi, Penerbit, Jilid, Pentahqiq, dll.)
+  if (book.description && book.description.trim()) {
+    const descBox = document.createElement('div');
+    descBox.className = 'book-description';
+
+    const descIcon = document.createElement('span');
+    descIcon.className = 'book-desc-icon';
+    descIcon.textContent = '📑';
+
+    const descText = document.createElement('div');
+    descText.className = 'book-desc-text';
+    descText.textContent = book.description;
+
+    descBox.appendChild(descIcon);
+    descBox.appendChild(descText);
+    item.appendChild(descBox);
+  }
+
+  // 3. Info Peminjaman (Jika sedang dipinjam)
   if (book.isBorrowed && book.borrowerName) {
     const loanBox = document.createElement('div');
     loanBox.className = 'loan-info-box';
@@ -743,6 +768,7 @@ function renderBooks() {
     filteredBooks = filteredBooks.filter(b => 
       b.title.toLowerCase().includes(queryText) || 
       b.author.toLowerCase().includes(queryText) ||
+      (b.description && b.description.toLowerCase().includes(queryText)) ||
       (b.borrowerName && b.borrowerName.toLowerCase().includes(queryText))
     );
   }
@@ -778,7 +804,7 @@ function renderBooks() {
 // ==========================================================================
 // Operasi CRUD Buku
 // ==========================================================================
-async function addBook(title, author, isRead) {
+async function addBook(title, author, isRead, description = '') {
   const formattedDate = new Date().toLocaleDateString('id-ID', { 
     day: 'numeric', month: 'short', year: 'numeric' 
   });
@@ -786,6 +812,7 @@ async function addBook(title, author, isRead) {
   const bookData = {
     title: title.trim(),
     author: author.trim(),
+    description: (description || '').trim(),
     isRead: Boolean(isRead),
     isBorrowed: false,
     borrowerName: '',
@@ -1097,7 +1124,8 @@ if (bookForm) {
   bookForm.addEventListener('submit', (e) => {
     e.preventDefault();
     if (validateBookForm()) {
-      addBook(titleInput.value, authorInput.value, isReadCheckbox.checked);
+      const descriptionVal = descriptionInput ? descriptionInput.value : '';
+      addBook(titleInput.value, authorInput.value, isReadCheckbox.checked, descriptionVal);
     }
   });
 }

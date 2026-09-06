@@ -536,7 +536,7 @@ body {
 .form-group textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(21, 71, 52, 0.12);
 }
 
 .form-group input.invalid {
@@ -548,6 +548,20 @@ body {
   color: var(--danger);
   min-height: 16px;
   display: block;
+}
+
+.optional-badge {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: block;
+  line-height: 1.4;
 }
 
 .form-hint {
@@ -888,6 +902,32 @@ body {
   background-color: #f1f8f4;
   color: #1b5e3a;
   border: 1px solid #c8e6d2;
+}
+
+/* Keterangan / Deskripsi Buku (Edisi, Penerbit, Jilid, Pentahqiq, dll.) */
+.book-description {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.book-desc-icon {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.book-desc-text {
+  flex: 1;
+  word-break: break-word;
 }
 
 /* Info Peminjaman Buku */
