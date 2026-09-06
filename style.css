@@ -750,6 +750,40 @@ body {
   margin-bottom: 20px;
 }
 
+/* Banner Info Pengunjung — hanya tampil di mobile saat belum login */
+.visitor-info-banner {
+  display: none; /* disembunyikan di desktop secara default */
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(21,71,52,0.07) 0%, rgba(197,155,39,0.08) 100%);
+  border: 1px solid rgba(197,155,39,0.35);
+  border-left: 4px solid var(--accent-gold);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.visitor-banner-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.visitor-info-banner p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Sembunyikan saat sudah login */
+body.user-logged-in .visitor-info-banner {
+  display: none !important;
+}
+
+
+
 .search-box {
   position: relative;
   display: flex;
@@ -1439,6 +1473,11 @@ body {
 
   .collection-header > div:first-child {
     text-align: left;
+  }
+
+  .visitor-info-banner {
+    display: flex !important; /* override default hidden */
+    margin-bottom: 14px;
   }
 
   .search-container {
