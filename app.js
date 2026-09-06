@@ -162,6 +162,9 @@ function updateAuthUI(user) {
 
   if (user) {
     // 1. SUDAH LOGIN SEBAGAI PEMILIK
+    document.body.classList.add('user-logged-in');
+    document.body.classList.remove('user-logged-out');
+
     if (btnOpenAuth) btnOpenAuth.classList.add('hidden');
     if (userProfile) userProfile.classList.remove('hidden');
 
@@ -188,6 +191,9 @@ function updateAuthUI(user) {
     }
   } else {
     // 2. BELUM LOGIN (PENGUNJUNG UMUM)
+    document.body.classList.add('user-logged-out');
+    document.body.classList.remove('user-logged-in');
+
     if (btnOpenAuth) btnOpenAuth.classList.remove('hidden');
     if (userProfile) userProfile.classList.add('hidden');
 

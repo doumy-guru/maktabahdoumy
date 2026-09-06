@@ -389,7 +389,31 @@ body {
 
 @media (max-width: 900px) {
   .main-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Nonaktifkan posisi sticky pada mobile/tablet agar tidak melayang menutupi pencarian */
+  .sidebar-column {
+    position: static !important;
+    top: auto !important;
+  }
+
+  /* Di layar mobile, prioritaskan bilah pencarian & daftar koleksi di atas untuk pengunjung */
+  body.user-logged-out .collection-card {
+    order: 1;
+  }
+  body.user-logged-out .sidebar-column {
+    order: 2;
+  }
+
+  /* Saat pemilik sudah masuk, tampilkan form tambah buku di atas */
+  body.user-logged-in .sidebar-column {
+    order: 1;
+  }
+  body.user-logged-in .collection-card {
+    order: 2;
   }
 }
 
@@ -1403,10 +1427,63 @@ body {
     font-size: 1.3rem;
   }
 
+  .card {
+    padding: 18px 16px;
+  }
+
+  .collection-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .collection-header > div:first-child {
+    text-align: left;
+  }
+
+  .search-container {
+    margin-bottom: 16px;
+  }
+
   .form-group input,
   .form-group textarea,
   #search-input {
     font-size: 16px; /* Cegah auto-zoom iOS */
+    padding: 12px 38px 12px 42px;
+  }
+
+  .auth-prompt-card {
+    padding: 20px 16px;
+    margin-top: 6px;
+  }
+
+  .prompt-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.6rem;
+    margin: 0 auto 12px;
+  }
+
+  .auth-prompt-card h2 {
+    font-size: 1.2rem;
+  }
+
+  .prompt-desc {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .prompt-info-box {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .prompt-subtext {
+    margin-bottom: 14px;
+    font-size: 0.78rem;
   }
 
   .btn,
