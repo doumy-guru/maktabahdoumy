@@ -1099,6 +1099,18 @@ body.user-logged-in .visitor-info-banner {
   background: #fdf3d6;
 }
 
+.btn-edit-action {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-edit-action:hover {
+  background: var(--primary-light);
+  border-color: var(--border-focus);
+  color: var(--primary);
+}
+
 .btn-delete {
   background: transparent;
   border: 1px solid transparent;

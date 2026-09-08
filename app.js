@@ -88,6 +88,16 @@ const starButtons = document.querySelectorAll('#star-rating-container .star-btn'
 const starRatingText = document.getElementById('star-rating-text');
 const reviewTextInput = document.getElementById('review-text');
 
+// Modal 4: Edit Koleksi Buku
+const modalEditBook = document.getElementById('modal-edit-book');
+const editBookForm = document.getElementById('edit-book-form');
+const editBookIdInput = document.getElementById('edit-book-id');
+const editBookTitleInput = document.getElementById('edit-book-title');
+const editBookAuthorInput = document.getElementById('edit-book-author');
+const editBookDescInput = document.getElementById('edit-book-description');
+const editTitleError = document.getElementById('edit-title-error');
+const editAuthorError = document.getElementById('edit-author-error');
+
 // Timer toast
 let toastTimeout;
 
@@ -135,7 +145,7 @@ document.querySelectorAll('[data-close]').forEach(btn => {
 });
 
 // Tutup modal jika klik overlay luar
-[modalAuth, modalLoan, modalReview].forEach(modal => {
+[modalAuth, modalLoan, modalReview, modalEditBook].forEach(modal => {
   if (modal) {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -151,6 +161,7 @@ document.addEventListener('keydown', (e) => {
     closeModal(modalAuth);
     closeModal(modalLoan);
     closeModal(modalReview);
+    closeModal(modalEditBook);
   }
 });
 
@@ -718,6 +729,15 @@ function createBookElement(book) {
       actionsBar.appendChild(reviewBtn);
     }
 
+    // Tombol Edit Buku (Judul, Penulis, Deskripsi)
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn btn-action btn-edit-action';
+    editBtn.innerHTML = '<span>✏️</span> Edit';
+    editBtn.setAttribute('aria-label', `Edit buku ${book.title}`);
+    editBtn.addEventListener('click', () => openEditBookModal(book));
+    actionsBar.appendChild(editBtn);
+
     // Tombol Hapus Buku
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
@@ -1096,6 +1116,106 @@ function localReviewUpdate(bookId, reviewData) {
     showToast('⭐ Catatan & review berhasil disimpan!');
   }
 }
+
+// ==========================================================================
+// Logika Fitur Edit Koleksi Buku
+// ==========================================================================
+function openEditBookModal(book) {
+  editBookIdInput.value = book.id;
+  editBookTitleInput.value = book.title || '';
+  editBookAuthorInput.value = book.author || '';
+  editBookDescInput.value = book.description || '';
+
+  if (editTitleError) editTitleError.textContent = '';
+  if (editAuthorError) editAuthorError.textContent = '';
+  editBookTitleInput.classList.remove('invalid');
+  editBookAuthorInput.classList.remove('invalid');
+
+  openModal(modalEditBook);
+  setTimeout(() => editBookTitleInput.focus(), 100);
+}
+
+if (editBookTitleInput) {
+  editBookTitleInput.addEventListener('input', () => {
+    if (editBookTitleInput.value.trim()) {
+      editBookTitleInput.classList.remove('invalid');
+      if (editTitleError) editTitleError.textContent = '';
+    }
+  });
+}
+
+if (editBookAuthorInput) {
+  editBookAuthorInput.addEventListener('input', () => {
+    if (editBookAuthorInput.value.trim()) {
+      editBookAuthorInput.classList.remove('invalid');
+      if (editAuthorError) editAuthorError.textContent = '';
+    }
+  });
+}
+
+if (editBookForm) {
+  editBookForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const bookId = editBookIdInput.value;
+    const newTitle = editBookTitleInput.value.trim();
+    const newAuthor = editBookAuthorInput.value.trim();
+    const newDesc = editBookDescInput.value.trim();
+
+    let isValid = true;
+    if (!newTitle) {
+      editBookTitleInput.classList.add('invalid');
+      if (editTitleError) editTitleError.textContent = 'Judul buku wajib diisi.';
+      isValid = false;
+    } else {
+      editBookTitleInput.classList.remove('invalid');
+      if (editTitleError) editTitleError.textContent = '';
+    }
+
+    if (!newAuthor) {
+      editBookAuthorInput.classList.add('invalid');
+      if (editAuthorError) editAuthorError.textContent = 'Nama penulis wajib diisi.';
+      isValid = false;
+    } else {
+      editBookAuthorInput.classList.remove('invalid');
+      if (editAuthorError) editAuthorError.textContent = '';
+    }
+
+    if (!isValid) return;
+
+    const updateData = {
+      title: newTitle,
+      author: newAuthor,
+      description: newDesc
+    };
+
+    if (isUsingFirebase && db) {
+      try {
+        showToast('💾 Menyimpan perubahan...');
+        await db.collection('books').doc(bookId).update(updateData);
+        showToast(`✅ Data buku "${newTitle}" berhasil diperbarui!`);
+      } catch (err) {
+        console.error('Error edit Firestore:', err);
+        localEditUpdate(bookId, updateData);
+      }
+    } else {
+      localEditUpdate(bookId, updateData);
+    }
+
+    closeModal(modalEditBook);
+  });
+}
+
+function localEditUpdate(bookId, updateData) {
+  const target = books.find(b => b.id === bookId);
+  if (target) {
+    Object.assign(target, updateData);
+    saveToLocalStorage();
+    renderBooks();
+    showToast(`✅ Data buku "${updateData.title}" berhasil diperbarui!`);
+  }
+}
+
+
 
 // ==========================================================================
 // Validasi & Event Form Tambah Buku

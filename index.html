@@ -351,6 +351,52 @@
       </div>
     </div>
 
+    <!-- ==========================================================================
+         MODAL 4: Edit Koleksi Buku
+         ========================================================================== -->
+    <div id="modal-edit-book" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="edit-book-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="edit-book-modal-title">✏️ Edit Informasi Buku</h3>
+          <button type="button" class="modal-close-btn" data-close="modal-edit-book" aria-label="Tutup modal">✕</button>
+        </div>
+
+        <form id="edit-book-form">
+          <div class="modal-body">
+            <p class="modal-subtitle" id="edit-book-subtitle">Perbarui judul, penulis, atau keterangan buku.</p>
+            <input type="hidden" id="edit-book-id">
+
+            <div class="form-group">
+              <label for="edit-book-title">Judul Buku <span class="required">*</span></label>
+              <input type="text" id="edit-book-title" placeholder="Contoh: Muqaddimah Ibnu Khaldun" autocomplete="off" required>
+              <span class="error-msg" id="edit-title-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-book-author">Penulis / Pengarang <span class="required">*</span></label>
+              <input type="text" id="edit-book-author" placeholder="Contoh: Ibnu Khaldun" autocomplete="off" required>
+              <span class="error-msg" id="edit-author-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-book-description">Deskripsi / Keterangan Buku</label>
+              <textarea 
+                id="edit-book-description" 
+                rows="3" 
+                placeholder="Contoh: Edisi Tahqiq Darul Kutub, Cetakan ke-3, 2 Jilid lengkap..."
+              ></textarea>
+              <small class="form-hint">Opsional: edisi, cetakan, penerbit, jumlah jilid, nama pentahqiq, dll.</small>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-close="modal-edit-book">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Toast Notifikasi -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
