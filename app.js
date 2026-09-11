@@ -98,6 +98,18 @@ const editBookDescInput = document.getElementById('edit-book-description');
 const editTitleError = document.getElementById('edit-title-error');
 const editAuthorError = document.getElementById('edit-author-error');
 
+// Fitur Input ISBN & Barcode Scanner
+const isbnInput = document.getElementById('isbn-input');
+const btnLookupIsbn = document.getElementById('btn-lookup-isbn');
+const btnOpenScanner = document.getElementById('btn-open-scanner');
+const isbnStatusMessage = document.getElementById('isbn-status-message');
+
+// Modal 5: Barcode Scanner Kamera
+const modalBarcodeScanner = document.getElementById('modal-barcode-scanner');
+const scannerStatusEl = document.getElementById('scanner-status');
+let html5QrCodeScanner = null;
+let isScanning = false;
+
 // Timer toast
 let toastTimeout;
 
@@ -140,15 +152,21 @@ function closeModal(modalEl) {
 document.querySelectorAll('[data-close]').forEach(btn => {
   btn.addEventListener('click', () => {
     const targetModalId = btn.dataset.close;
+    if (targetModalId === 'modal-barcode-scanner') {
+      stopBarcodeScanner();
+    }
     closeModal(document.getElementById(targetModalId));
   });
 });
 
 // Tutup modal jika klik overlay luar
-[modalAuth, modalLoan, modalReview, modalEditBook].forEach(modal => {
+[modalAuth, modalLoan, modalReview, modalEditBook, modalBarcodeScanner].forEach(modal => {
   if (modal) {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
+        if (modal === modalBarcodeScanner) {
+          stopBarcodeScanner();
+        }
         closeModal(modal);
       }
     });
@@ -162,6 +180,10 @@ document.addEventListener('keydown', (e) => {
     closeModal(modalLoan);
     closeModal(modalReview);
     closeModal(modalEditBook);
+    if (modalBarcodeScanner && !modalBarcodeScanner.classList.contains('hidden')) {
+      stopBarcodeScanner();
+      closeModal(modalBarcodeScanner);
+    }
   }
 });
 
@@ -868,6 +890,8 @@ async function addBook(title, author, isRead, description = '') {
   }
 
   if (bookForm) bookForm.reset();
+  if (isbnInput) isbnInput.value = '';
+  setIsbnStatus('', '');
   if (titleInput) titleInput.focus();
 }
 
@@ -1214,6 +1238,267 @@ function localEditUpdate(bookId, updateData) {
     showToast(`✅ Data buku "${updateData.title}" berhasil diperbarui!`);
   }
 }
+
+// ==========================================================================
+// Fitur Pencarian Data Buku via ISBN (Google Books & Open Library)
+// serta Pemindai Barcode Kamera (Html5Qrcode)
+// ==========================================================================
+function cleanIsbn(raw) {
+  if (!raw) return '';
+  return raw.replace(/[^0-9X]/gi, '').toUpperCase();
+}
+
+function setIsbnStatus(type, message) {
+  if (!isbnStatusMessage) return;
+  if (!message) {
+    isbnStatusMessage.className = 'isbn-status-message hidden';
+    isbnStatusMessage.innerHTML = '';
+    return;
+  }
+  isbnStatusMessage.className = `isbn-status-message ${type}`;
+  isbnStatusMessage.innerHTML = message;
+  isbnStatusMessage.classList.remove('hidden');
+}
+
+async function lookupBookByIsbn(isbnRaw) {
+  const isbn = cleanIsbn(isbnRaw);
+  if (!isbn || (isbn.length !== 10 && isbn.length !== 13)) {
+    setIsbnStatus('error', '⚠️ Format ISBN tidak valid (harus 10 atau 13 digit).');
+    showToast('⚠️ Masukkan nomor ISBN 10 atau 13 digit.');
+    return;
+  }
+
+  setIsbnStatus('loading', '<span>🔄</span> Mencari di database buku online...');
+  if (btnLookupIsbn) btnLookupIsbn.disabled = true;
+
+  try {
+    let bookInfo = null;
+
+    // 1. Coba Google Books API terlebih dahulu
+    try {
+      const gBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`;
+      const gRes = await fetch(gBooksUrl);
+      if (gRes.ok) {
+        const gData = await gRes.json();
+        if (gData.items && gData.items.length > 0) {
+          const info = gData.items[0].volumeInfo;
+          bookInfo = {
+            source: 'Google Books',
+            title: info.title || '',
+            subtitle: info.subtitle || '',
+            authors: (info.authors && info.authors.length) ? info.authors.join(', ') : '',
+            publisher: info.publisher || '',
+            publishedDate: info.publishedDate || '',
+            pageCount: info.pageCount ? `${info.pageCount} Halaman` : '',
+            description: info.description || '',
+            categories: (info.categories && info.categories.length) ? info.categories.join(', ') : '',
+            isbn: isbn
+          };
+        }
+      }
+    } catch (gErr) {
+      console.warn('Google Books API lookup error:', gErr);
+    }
+
+    // 2. Jika tidak ditemukan di Google Books, coba Open Library API
+    if (!bookInfo) {
+      try {
+        const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${encodeURIComponent(isbn)}&format=json&jscmd=data`;
+        const olRes = await fetch(olUrl);
+        if (olRes.ok) {
+          const olData = await olRes.json();
+          const olKey = `ISBN:${isbn}`;
+          if (olData[olKey]) {
+            const data = olData[olKey];
+            const authorsList = data.authors ? data.authors.map(a => a.name).join(', ') : '';
+            const publisherList = data.publishers ? data.publishers.map(p => p.name).join(', ') : '';
+            bookInfo = {
+              source: 'Open Library',
+              title: data.title || '',
+              subtitle: data.subtitle || '',
+              authors: authorsList,
+              publisher: publisherList,
+              publishedDate: data.publish_date || '',
+              pageCount: data.number_of_pages ? `${data.number_of_pages} Halaman` : '',
+              description: typeof data.notes === 'string' ? data.notes : '',
+              categories: data.subjects ? data.subjects.slice(0, 3).map(s => s.name).join(', ') : '',
+              isbn: isbn
+            };
+          }
+        }
+      } catch (olErr) {
+        console.warn('Open Library API lookup error:', olErr);
+      }
+    }
+
+    if (!bookInfo) {
+      setIsbnStatus('error', `❌ Buku dengan ISBN <strong>${escapeHtml(isbn)}</strong> tidak ditemukan di database online. Silakan isi data secara manual.`);
+      showToast('❌ Data buku tidak ditemukan di database.');
+      return;
+    }
+
+    // Gabungkan judul & subjudul jika ada
+    const fullTitle = bookInfo.subtitle ? `${bookInfo.title}: ${bookInfo.subtitle}` : bookInfo.title;
+
+    // Susun deskripsi otomatis yang rapi dan informatif
+    const descParts = [];
+    if (bookInfo.publisher) descParts.push(`Penerbit: ${bookInfo.publisher}`);
+    if (bookInfo.publishedDate) descParts.push(`Tahun: ${bookInfo.publishedDate}`);
+    if (bookInfo.pageCount) descParts.push(bookInfo.pageCount);
+    if (bookInfo.isbn) descParts.push(`ISBN: ${bookInfo.isbn}`);
+    if (bookInfo.categories) descParts.push(`Kategori: ${bookInfo.categories}`);
+    if (bookInfo.description) {
+      const cleanDesc = bookInfo.description.replace(/\s+/g, ' ').trim();
+      const shortDesc = cleanDesc.length > 250 ? cleanDesc.slice(0, 247) + '...' : cleanDesc;
+      descParts.push(`Sinopsis: "${shortDesc}"`);
+    }
+
+    // Isi ke form
+    if (titleInput) {
+      titleInput.value = fullTitle;
+      titleInput.classList.remove('invalid');
+      if (titleError) titleError.textContent = '';
+    }
+    if (authorInput) {
+      authorInput.value = bookInfo.authors || 'Penulis Tidak Diketahui';
+      authorInput.classList.remove('invalid');
+      if (authorError) authorError.textContent = '';
+    }
+    if (descriptionInput) {
+      descriptionInput.value = descParts.join(' • ');
+    }
+
+    setIsbnStatus('success', `✅ Data ditemukan via ${bookInfo.source}: <strong>${escapeHtml(fullTitle)}</strong>`);
+    showToast(`✅ Data buku ditemukan via ${bookInfo.source}!`);
+
+  } catch (err) {
+    console.error('Lookup error:', err);
+    setIsbnStatus('error', '⚠️ Terjadi kendala saat menghubungi database buku. Periksa koneksi internet Anda.');
+    showToast('⚠️ Gagal menghubungi database buku.');
+  } finally {
+    if (btnLookupIsbn) btnLookupIsbn.disabled = false;
+  }
+}
+
+async function startBarcodeScanner() {
+  if (typeof Html5Qrcode === 'undefined') {
+    showToast('⚠️ Library scanner belum siap. Coba muat ulang halaman.');
+    return;
+  }
+
+  openModal(modalBarcodeScanner);
+  if (scannerStatusEl) {
+    scannerStatusEl.className = 'scanner-status';
+    scannerStatusEl.innerHTML = '<span class="scanner-spinner">🔄</span> Menghubungkan ke kamera...';
+  }
+
+  try {
+    if (!html5QrCodeScanner) {
+      html5QrCodeScanner = new Html5Qrcode('scanner-reader');
+    }
+
+    const config = {
+      fps: 10,
+      qrbox: { width: 250, height: 160 },
+      aspectRatio: 1.0,
+      formatsToSupport: (typeof Html5QrcodeSupportedFormats !== 'undefined') ? [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.UPC_A
+      ] : undefined
+    };
+
+    isScanning = true;
+
+    await html5QrCodeScanner.start(
+      { facingMode: "environment" },
+      config,
+      (decodedText) => {
+        onBarcodeScannedSuccess(decodedText);
+      },
+      () => {}
+    );
+
+    if (scannerStatusEl) {
+      scannerStatusEl.innerHTML = '🟢 Kamera aktif. Arahkan ke barcode buku (EAN-13 / ISBN).';
+    }
+
+  } catch (err) {
+    console.error('Scanner camera error:', err);
+    isScanning = false;
+    if (scannerStatusEl) {
+      scannerStatusEl.className = 'scanner-status error';
+      scannerStatusEl.innerHTML = '⚠️ Tidak dapat membuka kamera. Pastikan izin kamera telah disetujui di peramban Anda.';
+    }
+  }
+}
+
+async function stopBarcodeScanner() {
+  if (html5QrCodeScanner && isScanning) {
+    try {
+      await html5QrCodeScanner.stop();
+      html5QrCodeScanner.clear();
+    } catch (e) {
+      console.warn('Error stopping scanner:', e);
+    }
+    isScanning = false;
+  }
+}
+
+function onBarcodeScannedSuccess(decodedText) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(120); } catch(e) {}
+  }
+
+  const clean = cleanIsbn(decodedText);
+  if (isbnInput) {
+    isbnInput.value = clean || decodedText;
+  }
+
+  showToast(`📷 Barcode terdeteksi: ${clean || decodedText}`);
+
+  stopBarcodeScanner();
+  closeModal(modalBarcodeScanner);
+
+  lookupBookByIsbn(clean || decodedText);
+}
+
+// Event Listeners Fitur ISBN & Scanner
+if (btnLookupIsbn) {
+  btnLookupIsbn.addEventListener('click', () => {
+    const val = isbnInput ? isbnInput.value.trim() : '';
+    if (!val) {
+      setIsbnStatus('error', '⚠️ Masukkan nomor ISBN terlebih dahulu.');
+      if (isbnInput) isbnInput.focus();
+      return;
+    }
+    lookupBookByIsbn(val);
+  });
+}
+
+if (isbnInput) {
+  isbnInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = isbnInput.value.trim();
+      if (val) lookupBookByIsbn(val);
+    }
+  });
+
+  isbnInput.addEventListener('input', () => {
+    if (isbnStatusMessage && !isbnStatusMessage.classList.contains('hidden')) {
+      setIsbnStatus('', '');
+    }
+  });
+}
+
+if (btnOpenScanner) {
+  btnOpenScanner.addEventListener('click', () => {
+    startBarcodeScanner();
+  });
+}
+
 
 
 

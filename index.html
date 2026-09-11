@@ -94,6 +94,37 @@
           </div>
 
           <form id="book-form" novalidate>
+            <!-- Fitur Cepat: Cari & Scan Barcode ISBN -->
+            <div class="isbn-lookup-section">
+              <label for="isbn-input" class="isbn-label">
+                <span>📚 Input Cepat via ISBN / Barcode</span>
+                <span class="isbn-hint-badge">Otomatis</span>
+              </label>
+              <div class="isbn-input-group">
+                <div class="isbn-input-wrapper">
+                  <span class="isbn-icon" aria-hidden="true">🔢</span>
+                  <input 
+                    type="text" 
+                    id="isbn-input" 
+                    placeholder="Contoh: 9786020332956" 
+                    autocomplete="off"
+                    aria-label="Nomor ISBN Buku"
+                  >
+                </div>
+                <button type="button" id="btn-lookup-isbn" class="btn btn-isbn-action" title="Cari data buku dari database online">
+                  <span>🔍</span> Cari
+                </button>
+                <button type="button" id="btn-open-scanner" class="btn btn-isbn-scan" title="Scan barcode buku dengan kamera">
+                  <span>📷</span> Scan
+                </button>
+              </div>
+              <div id="isbn-status-message" class="isbn-status-message hidden"></div>
+            </div>
+
+            <div class="form-divider">
+              <span>atau ketik data manual</span>
+            </div>
+
             <div class="form-group">
               <label for="book-title">Judul Buku <span class="required">*</span></label>
               <input 
@@ -397,6 +428,35 @@
       </div>
     </div>
 
+    <!-- ==========================================================================
+         MODAL 5: Pemindai Barcode Kamera (ISBN)
+         ========================================================================== -->
+    <div id="modal-barcode-scanner" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="scanner-modal-title">
+      <div class="modal-dialog scanner-modal-dialog">
+        <div class="modal-header">
+          <h3 id="scanner-modal-title">📷 Pindai Barcode Buku (ISBN)</h3>
+          <button type="button" class="modal-close-btn" data-close="modal-barcode-scanner" aria-label="Tutup modal scanner">✕</button>
+        </div>
+
+        <div class="modal-body scanner-modal-body">
+          <p class="scanner-instruction">Arahkan kamera ke barcode 13-digit (ISBN / EAN-13) di sampul belakang buku Anda.</p>
+          
+          <div class="scanner-viewport-wrapper">
+            <div id="scanner-reader"></div>
+            <div class="scanner-laser-line" id="scanner-laser"></div>
+          </div>
+
+          <div id="scanner-status" class="scanner-status">
+            <span class="scanner-status-text">🔄 Menyiapkan kamera...</span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="modal-barcode-scanner">Tutup / Batal</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Notifikasi -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
@@ -411,6 +471,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
+  <!-- Library Pemindai Barcode / QR (Kompatibel EAN-13 Buku & Kamera Smartphone) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -638,8 +638,252 @@ body {
 .checkbox-label input[type="checkbox"]:checked ~ .custom-checkbox::after {
   content: '✓';
   color: #ffffff;
-  font-size: 13px;
-  font-weight: bold;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Fitur Quick-Fill ISBN & Barcode Scanner
+   ========================================================================== */
+.isbn-lookup-section {
+  background: linear-gradient(135deg, rgba(21, 71, 52, 0.05) 0%, rgba(197, 155, 39, 0.07) 100%);
+  border: 1.5px dashed var(--accent-gold-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.isbn-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.isbn-hint-badge {
+  background: var(--accent-gold-light);
+  color: #8b6508;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-gold-border);
+}
+
+.isbn-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.isbn-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.isbn-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+#isbn-input {
+  width: 100%;
+  padding: 8px 10px 8px 32px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+#isbn-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(21, 71, 52, 0.1);
+}
+
+.btn-isbn-action,
+.btn-isbn-scan {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.btn-isbn-action {
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+}
+
+.btn-isbn-action:hover {
+  background: var(--primary-hover);
+}
+
+.btn-isbn-action:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-isbn-scan {
+  background: var(--accent-gold-light);
+  color: #7b5805;
+  border: 1.5px solid var(--accent-gold);
+}
+
+.btn-isbn-scan:hover {
+  background: #fdf1d0;
+  color: #5d4202;
+}
+
+.isbn-status-message {
+  font-size: 0.8rem;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.isbn-status-message.loading {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.isbn-status-message.success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.isbn-status-message.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.form-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 14px 0 16px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.form-divider::before,
+.form-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.form-divider span {
+  padding: 0 10px;
+}
+
+/* Scanner Barcode Modal */
+.scanner-modal-dialog {
+  max-width: 460px;
+}
+
+.scanner-modal-body {
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.scanner-instruction {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.45;
+}
+
+.scanner-viewport-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  min-height: 240px;
+  background: #000000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--accent-gold);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#scanner-reader {
+  width: 100% !important;
+  border: none !important;
+}
+
+#scanner-reader video {
+  border-radius: var(--radius-md);
+  object-fit: cover !important;
+  width: 100% !important;
+}
+
+#scanner-reader img[alt="Info icon"] {
+  display: none !important;
+}
+
+.scanner-laser-line {
+  position: absolute;
+  top: 20%;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0) 0%, #ef4444 50%, rgba(239, 68, 68, 0) 100%);
+  box-shadow: 0 0 8px #ef4444;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: laserScan 2s infinite ease-in-out alternate;
+  z-index: 10;
+}
+
+@keyframes laserScan {
+  0% {
+    top: 15%;
+  }
+  100% {
+    top: 85%;
+  }
+}
+
+.scanner-status {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.scanner-status.error {
+  color: var(--danger);
 }
 
 .checkbox-label:hover .custom-checkbox {
@@ -1498,9 +1742,25 @@ body.user-logged-in .visitor-info-banner {
 
   .form-group input,
   .form-group textarea,
-  #search-input {
+  #search-input,
+  #isbn-input {
     font-size: 16px; /* Cegah auto-zoom iOS */
-    padding: 12px 38px 12px 42px;
+  }
+
+  .isbn-input-group {
+    flex-wrap: wrap;
+  }
+
+  .isbn-input-wrapper {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .btn-isbn-action,
+  .btn-isbn-scan {
+    flex: 1;
+    min-height: 40px;
+    justify-content: center;
   }
 
   .auth-prompt-card {
