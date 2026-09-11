@@ -781,6 +781,49 @@ body {
   border: 1px solid #fecaca;
 }
 
+.perpusnas-helper-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-perpusnas-link,
+.btn-paste-action {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-perpusnas-link {
+  background: #f0f7ff;
+  border: 1px solid #bae0fd;
+  color: #0369a1;
+}
+
+.btn-perpusnas-link:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0284c7;
+}
+
+.btn-paste-action {
+  background: #fdfaf0;
+  border: 1px solid #f6e0b5;
+  color: #926a10;
+}
+
+.btn-paste-action:hover {
+  background: #fdf3d6;
+  border-color: var(--accent-gold);
+}
+
 .form-divider {
   display: flex;
   align-items: center;

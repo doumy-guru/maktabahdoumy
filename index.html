@@ -119,6 +119,16 @@
                 </button>
               </div>
               <div id="isbn-status-message" class="isbn-status-message hidden"></div>
+              
+              <!-- Tombol Cepat Perpusnas RI & Smart Paste -->
+              <div id="perpusnas-helper-actions" class="perpusnas-helper-actions">
+                <button type="button" id="btn-open-perpusnas" class="btn btn-perpusnas-link" title="Buka pencarian di website Perpustakaan Nasional RI (otomatis salin nomor ISBN)">
+                  <span>🌐</span> Buka di Perpusnas
+                </button>
+                <button type="button" id="btn-open-paste-modal" class="btn btn-paste-action" title="Tempel data yang disalin dari tabel web Perpusnas untuk mengisi formulir otomatis">
+                  <span>📋</span> Tempel Data Perpusnas
+                </button>
+              </div>
             </div>
 
             <div class="form-divider">
@@ -454,6 +464,40 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" data-close="modal-barcode-scanner">Tutup / Batal</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 6: Tempel Cepat Data Perpusnas (Smart Parse)
+         ========================================================================== -->
+    <div id="modal-paste-perpusnas" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="paste-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="paste-modal-title">📋 Tempel Data dari Perpusnas</h3>
+          <button type="button" class="modal-close-btn" data-close="modal-paste-perpusnas" aria-label="Tutup modal">✕</button>
+        </div>
+
+        <form id="paste-perpusnas-form">
+          <div class="modal-body">
+            <p class="modal-subtitle">Salin baris data buku dari web <strong>isbn.perpusnas.go.id</strong>, lalu tempelkan di bawah:</p>
+            
+            <div class="form-group">
+              <label for="paste-perpusnas-input">Teks Hasil Salinan <span class="required">*</span></label>
+              <textarea 
+                id="paste-perpusnas-input" 
+                rows="5" 
+                placeholder="Contoh: Salin satu baris tabel dari web Perpusnas dan tempel di sini..."
+                required
+              ></textarea>
+              <small class="form-hint">Sistem akan otomatis mendeteksi Judul, Pengarang, Penerbit, Tahun, dan ISBN.</small>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-close="modal-paste-perpusnas">Batal</button>
+            <button type="submit" class="btn btn-primary">Isi ke Formulir Otomatis</button>
+          </div>
+        </form>
       </div>
     </div>
 

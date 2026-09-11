@@ -110,6 +110,13 @@ const scannerStatusEl = document.getElementById('scanner-status');
 let html5QrCodeScanner = null;
 let isScanning = false;
 
+// Fitur Aksi Bantuan Perpusnas & Smart Paste
+const btnOpenPerpusnas = document.getElementById('btn-open-perpusnas');
+const btnOpenPasteModal = document.getElementById('btn-open-paste-modal');
+const modalPastePerpusnas = document.getElementById('modal-paste-perpusnas');
+const pastePerpusnasForm = document.getElementById('paste-perpusnas-form');
+const pastePerpusnasInput = document.getElementById('paste-perpusnas-input');
+
 // Timer toast
 let toastTimeout;
 
@@ -160,7 +167,7 @@ document.querySelectorAll('[data-close]').forEach(btn => {
 });
 
 // Tutup modal jika klik overlay luar
-[modalAuth, modalLoan, modalReview, modalEditBook, modalBarcodeScanner].forEach(modal => {
+[modalAuth, modalLoan, modalReview, modalEditBook, modalBarcodeScanner, modalPastePerpusnas].forEach(modal => {
   if (modal) {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -180,6 +187,7 @@ document.addEventListener('keydown', (e) => {
     closeModal(modalLoan);
     closeModal(modalReview);
     closeModal(modalEditBook);
+    closeModal(modalPastePerpusnas);
     if (modalBarcodeScanner && !modalBarcodeScanner.classList.contains('hidden')) {
       stopBarcodeScanner();
       closeModal(modalBarcodeScanner);
@@ -1274,9 +1282,12 @@ async function lookupBookByIsbn(isbnRaw) {
   try {
     let bookInfo = null;
 
-    // 1. Coba Google Books API terlebih dahulu
+    // 1. Coba Google Books API terlebih dahulu (sertakan key jika ada)
     try {
-      const gBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`;
+      let gBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`;
+      if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey) {
+        gBooksUrl += `&key=${encodeURIComponent(firebaseConfig.apiKey)}`;
+      }
       const gRes = await fetch(gBooksUrl);
       if (gRes.ok) {
         const gData = await gRes.json();
@@ -1332,8 +1343,12 @@ async function lookupBookByIsbn(isbnRaw) {
     }
 
     if (!bookInfo) {
-      setIsbnStatus('error', `❌ Buku dengan ISBN <strong>${escapeHtml(isbn)}</strong> tidak ditemukan di database online. Silakan isi data secara manual.`);
-      showToast('❌ Data buku tidak ditemukan di database.');
+      setIsbnStatus(
+        'error', 
+        `⚠️ Buku dengan ISBN <strong>${escapeHtml(isbn)}</strong> belum terindeks di Google Books / Open Library.<br>` +
+        `Buku lokal Indonesia umumnya terdaftar di <strong>Perpusnas RI</strong>. Klik <strong>"Buka di Perpusnas"</strong> di bawah (nomor ISBN otomatis disalin), lalu salin baris data dari web Perpusnas dan klik <strong>"Tempel Data Perpusnas"</strong>.`
+      );
+      showToast('⚠️ Belum ada di Google Books. Cek Perpusnas di bawah.');
       return;
     }
 
@@ -1497,6 +1512,133 @@ if (btnOpenScanner) {
   btnOpenScanner.addEventListener('click', () => {
     startBarcodeScanner();
   });
+}
+
+// Tombol Buka Pencarian Perpusnas
+if (btnOpenPerpusnas) {
+  btnOpenPerpusnas.addEventListener('click', async () => {
+    const rawVal = isbnInput ? isbnInput.value.trim() : '';
+    const isbn = cleanIsbn(rawVal);
+    if (isbn) {
+      try {
+        await navigator.clipboard.writeText(isbn);
+        showToast(`📋 ISBN ${isbn} disalin ke clipboard! Membuka Perpusnas...`);
+      } catch (err) {
+        showToast('🌐 Membuka pencarian Perpusnas...');
+      }
+    } else {
+      showToast('🌐 Membuka pencarian Perpusnas...');
+    }
+    window.open('https://isbn.perpusnas.go.id/landing_page/search', '_blank', 'noopener,noreferrer');
+  });
+}
+
+// Tombol Buka Modal Tempel Data Perpusnas
+if (btnOpenPasteModal) {
+  btnOpenPasteModal.addEventListener('click', () => {
+    if (pastePerpusnasInput) {
+      pastePerpusnasInput.value = '';
+    }
+    openModal(modalPastePerpusnas);
+    setTimeout(() => {
+      if (pastePerpusnasInput) pastePerpusnasInput.focus();
+    }, 100);
+  });
+}
+
+// Form Handler Smart Paste Perpusnas
+if (pastePerpusnasForm) {
+  pastePerpusnasForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = pastePerpusnasInput ? pastePerpusnasInput.value.trim() : '';
+    if (!text) return;
+
+    parseAndApplyPerpusnasData(text);
+    closeModal(modalPastePerpusnas);
+  });
+}
+
+function parseAndApplyPerpusnasData(rawText) {
+  let title = '';
+  let author = '';
+  let publisher = '';
+  let year = '';
+  let isbn = '';
+
+  // 1. Ekstrak ISBN jika ditemukan pola 978/979
+  const isbnMatch = rawText.match(/\b(97[89][\d\-\s]{10,17}\b)/);
+  if (isbnMatch) {
+    isbn = cleanIsbn(isbnMatch[1]);
+  }
+
+  // 2. Ekstrak Tahun Terbit (4 digit 19xx atau 20xx)
+  const yearMatch = rawText.match(/\b(19\d\d|20\d\d)\b/);
+  if (yearMatch) {
+    year = yearMatch[1];
+  }
+
+  // 3. Deteksi format berbasis Tab (hasil salinan baris tabel DataTables Perpusnas)
+  if (rawText.includes('\t')) {
+    const parts = rawText.split('\t').map(p => p.trim()).filter(Boolean);
+    parts.forEach((part, idx) => {
+      if (!title && idx <= 1 && part.length > 1 && !/^(cetak|elektronik|\d+)$/i.test(part)) {
+        title = part;
+      } else if (!author && idx >= 2 && idx <= 4 && !/^(cetak|elektronik|non terjemahan|terjemahan|97[89]|\d{4})$/i.test(part)) {
+        author = part;
+      } else if (!publisher && idx >= 3 && idx <= 5 && !/^(cetak|elektronik|non terjemahan|terjemahan|97[89]|\d{4})$/i.test(part) && part !== author) {
+        publisher = part;
+      }
+    });
+  } else {
+    // 4. Deteksi format berbasis Baris Baru (Newline)
+    const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const candidateLines = lines.filter(line => {
+      return !/^(cetak|elektronik|non terjemahan|terjemahan|aktif|lihat kdt|link buku|link kdt|isbn)$/i.test(line) &&
+             !/^\b(19\d\d|20\d\d)\b$/.test(line) &&
+             !/^(97[89][\d\-\s]{10,17})$/.test(line);
+    });
+
+    if (candidateLines.length > 0) title = candidateLines[0];
+    if (candidateLines.length > 1) author = candidateLines[1];
+    if (candidateLines.length > 2) publisher = candidateLines[2];
+  }
+
+  // Jika author masih kosong tetapi ada separator " / " pada judul
+  if (!author && title.includes(' / ')) {
+    const [t, a] = title.split(' / ');
+    title = t.trim();
+    author = a.trim();
+  }
+
+  // Terapkan ke formulir
+  if (title && titleInput) {
+    titleInput.value = title;
+    titleInput.classList.remove('invalid');
+    if (titleError) titleError.textContent = '';
+  }
+
+  if (author && authorInput) {
+    authorInput.value = author;
+    authorInput.classList.remove('invalid');
+    if (authorError) authorError.textContent = '';
+  }
+
+  // Susun deskripsi rapi
+  const descParts = [];
+  if (publisher) descParts.push(`Penerbit: ${publisher}`);
+  if (year) descParts.push(`Tahun: ${year}`);
+  if (isbn) descParts.push(`ISBN: ${isbn}`);
+
+  if (descParts.length > 0 && descriptionInput) {
+    descriptionInput.value = descParts.join(' • ');
+  }
+
+  if (isbn && isbnInput && !isbnInput.value) {
+    isbnInput.value = isbn;
+  }
+
+  setIsbnStatus('success', `✅ Data dari Perpusnas berhasil dimasukkan: <strong>${escapeHtml(title || 'Buku')}</strong>`);
+  showToast('✅ Data dari Perpusnas berhasil dimasukkan!');
 }
 
 
