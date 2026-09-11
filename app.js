@@ -117,6 +117,17 @@ const modalPastePerpusnas = document.getElementById('modal-paste-perpusnas');
 const pastePerpusnasForm = document.getElementById('paste-perpusnas-form');
 const pastePerpusnasInput = document.getElementById('paste-perpusnas-input');
 
+// Modal 7: Layanan SLiMS P2P
+const modalSlimsP2p = document.getElementById('modal-slims-p2p');
+const btnOpenSlimsP2p = document.getElementById('btn-open-slims-p2p');
+const slimsServerSelect = document.getElementById('slims-server-select');
+const slimsCustomServerGroup = document.getElementById('slims-custom-server-group');
+const slimsCustomServerUrl = document.getElementById('slims-custom-server-url');
+const slimsSearchKeyword = document.getElementById('slims-search-keyword');
+const btnSlimsSearch = document.getElementById('btn-slims-search');
+const slimsP2pStatus = document.getElementById('slims-p2p-status');
+const slimsP2pResults = document.getElementById('slims-p2p-results');
+
 // Timer toast
 let toastTimeout;
 
@@ -167,7 +178,7 @@ document.querySelectorAll('[data-close]').forEach(btn => {
 });
 
 // Tutup modal jika klik overlay luar
-[modalAuth, modalLoan, modalReview, modalEditBook, modalBarcodeScanner, modalPastePerpusnas].forEach(modal => {
+[modalAuth, modalLoan, modalReview, modalEditBook, modalBarcodeScanner, modalPastePerpusnas, modalSlimsP2p].forEach(modal => {
   if (modal) {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -188,6 +199,7 @@ document.addEventListener('keydown', (e) => {
     closeModal(modalReview);
     closeModal(modalEditBook);
     closeModal(modalPastePerpusnas);
+    closeModal(modalSlimsP2p);
     if (modalBarcodeScanner && !modalBarcodeScanner.classList.contains('hidden')) {
       stopBarcodeScanner();
       closeModal(modalBarcodeScanner);
@@ -1639,6 +1651,280 @@ function parseAndApplyPerpusnasData(rawText) {
 
   setIsbnStatus('success', `✅ Data dari Perpusnas berhasil dimasukkan: <strong>${escapeHtml(title || 'Buku')}</strong>`);
   showToast('✅ Data dari Perpusnas berhasil dimasukkan!');
+}
+
+// ==========================================================================
+// Fitur Layanan SLiMS P2P (Copy Cataloging dari Server SLiMS Mitra)
+// ==========================================================================
+if (slimsServerSelect) {
+  slimsServerSelect.addEventListener('change', () => {
+    if (slimsServerSelect.value === 'custom') {
+      if (slimsCustomServerGroup) slimsCustomServerGroup.classList.remove('hidden');
+      if (slimsCustomServerUrl) slimsCustomServerUrl.focus();
+    } else {
+      if (slimsCustomServerGroup) slimsCustomServerGroup.classList.add('hidden');
+    }
+  });
+}
+
+if (btnOpenSlimsP2p) {
+  btnOpenSlimsP2p.addEventListener('click', () => {
+    const currentIsbn = isbnInput ? isbnInput.value.trim() : '';
+    if (currentIsbn && slimsSearchKeyword && !slimsSearchKeyword.value) {
+      slimsSearchKeyword.value = currentIsbn;
+    }
+    openModal(modalSlimsP2p);
+    setTimeout(() => {
+      if (slimsSearchKeyword) slimsSearchKeyword.focus();
+    }, 100);
+  });
+}
+
+if (btnSlimsSearch) {
+  btnSlimsSearch.addEventListener('click', executeSlimsSearch);
+}
+
+if (slimsSearchKeyword) {
+  slimsSearchKeyword.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSlimsSearch();
+    }
+  });
+}
+
+async function executeSlimsSearch() {
+  const keyword = slimsSearchKeyword ? slimsSearchKeyword.value.trim() : '';
+  if (!keyword) {
+    showSlimsStatus('error', '⚠️ Masukkan kata kunci pencarian (Judul, Pengarang, atau ISBN).');
+    return;
+  }
+
+  let serverUrl = slimsServerSelect ? slimsServerSelect.value : '';
+  if (serverUrl === 'custom') {
+    serverUrl = slimsCustomServerUrl ? slimsCustomServerUrl.value.trim() : '';
+    if (!serverUrl) {
+      showSlimsStatus('error', '⚠️ Masukkan alamat URL server SLiMS (harus https://).');
+      return;
+    }
+  }
+
+  if (!serverUrl.startsWith('http://') && !serverUrl.startsWith('https://')) {
+    serverUrl = 'https://' + serverUrl;
+  }
+  if (!serverUrl.endsWith('/')) serverUrl += '/';
+
+  showSlimsStatus('info', '<span>🔄</span> Menghubungkan ke katalog SLiMS...');
+  if (slimsP2pResults) slimsP2pResults.innerHTML = '';
+  if (btnSlimsSearch) btnSlimsSearch.disabled = true;
+
+  try {
+    const endpoint = `${serverUrl}index.php?resultXML=true&search=Search&keywords=${encodeURIComponent(keyword)}`;
+    let responseText = '';
+
+    try {
+      const res = await fetch(endpoint, { mode: 'cors' });
+      if (res.ok) {
+        responseText = await res.text();
+      } else {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    } catch (corsErr) {
+      // Coba fallback via proxy CORS publik jika dicegah peramban
+      try {
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(endpoint)}`;
+        const pRes = await fetch(proxyUrl);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          responseText = pData.contents;
+        }
+      } catch (proxyErr) {
+        console.warn('Proxy SLiMS error:', proxyErr);
+      }
+    }
+
+    if (!responseText || responseText.length < 25) {
+      showSlimsStatus('error', 
+        `⚠️ Server SLiMS tujuan membatasi akses lintas domain (CORS) dari browser.<br>` +
+        `Anda dapat membuka katalog langsung melalui tombol di bawah, lalu menyalin teksnya:<br>` +
+        `<a href="${serverUrl}index.php?search=Search&keywords=${encodeURIComponent(keyword)}" target="_blank" class="btn btn-sm btn-outline" style="margin-top:8px; display:inline-flex;">🌐 Buka OPAC ${escapeHtml(serverUrl)} di Tab Baru ↗</a>`
+      );
+      return;
+    }
+
+    const booksFound = parseSlimsXml(responseText, serverUrl);
+    if (!booksFound || booksFound.length === 0) {
+      showSlimsStatus('info', `Katalog SLiMS merespon, namun tidak ditemukan buku dengan kata kunci "${escapeHtml(keyword)}".`);
+      return;
+    }
+
+    showSlimsStatus('info', `✅ Ditemukan <strong>${booksFound.length}</strong> buku dari katalog SLiMS.`);
+    renderSlimsResults(booksFound);
+
+  } catch (err) {
+    console.error('SLiMS P2P error:', err);
+    showSlimsStatus('error', `⚠️ Terjadi kendala saat menghubungi server SLiMS: ${err.message}`);
+  } finally {
+    if (btnSlimsSearch) btnSlimsSearch.disabled = false;
+  }
+}
+
+function showSlimsStatus(type, message) {
+  if (!slimsP2pStatus) return;
+  slimsP2pStatus.className = `slims-p2p-status ${type}`;
+  slimsP2pStatus.innerHTML = message;
+  slimsP2pStatus.classList.remove('hidden');
+}
+
+function parseSlimsXml(xmlString, serverUrl) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+  const items = [];
+
+  const records = xmlDoc.querySelectorAll('mods, record');
+  records.forEach(rec => {
+    const titleEl = rec.querySelector('title, mods\\:title');
+    const title = titleEl ? titleEl.textContent.trim() : '';
+
+    const nameEl = rec.querySelector('namePart, mods\\:namePart');
+    const author = nameEl ? nameEl.textContent.trim() : '';
+
+    const pubEl = rec.querySelector('publisher, mods\\:publisher');
+    const publisher = pubEl ? pubEl.textContent.trim() : '';
+
+    const dateEl = rec.querySelector('dateIssued, mods\\:dateIssued');
+    const year = dateEl ? dateEl.textContent.trim() : '';
+
+    const placeEl = rec.querySelector('placeTerm, mods\\:placeTerm');
+    const place = placeEl ? placeEl.textContent.trim() : '';
+
+    const isbnEl = rec.querySelector('identifier[type="isbn"], identifier, mods\\:identifier');
+    const isbn = isbnEl ? isbnEl.textContent.trim() : '';
+
+    const classEl = rec.querySelector('classification, mods\\:classification');
+    const ddc = classEl ? classEl.textContent.trim() : '';
+
+    const topicEl = rec.querySelector('topic, mods\\:topic');
+    const topic = topicEl ? topicEl.textContent.trim() : '';
+
+    if (title) {
+      items.push({
+        title,
+        author: author || 'Penulis Tidak Diketahui',
+        publisher,
+        year,
+        place,
+        isbn,
+        ddc,
+        topic,
+        serverUrl
+      });
+    }
+  });
+
+  return items;
+}
+
+function renderSlimsResults(books) {
+  if (!slimsP2pResults) return;
+  slimsP2pResults.innerHTML = '';
+
+  books.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'slims-card-item';
+
+    const header = document.createElement('div');
+    header.className = 'slims-card-header';
+
+    const titleEl = document.createElement('h4');
+    titleEl.className = 'slims-card-title';
+    titleEl.textContent = b.title;
+
+    const authorEl = document.createElement('p');
+    authorEl.className = 'slims-card-author';
+    authorEl.textContent = `✍️ ${b.author}`;
+
+    header.appendChild(titleEl);
+    header.appendChild(authorEl);
+    card.appendChild(header);
+
+    const meta = document.createElement('div');
+    meta.className = 'slims-card-meta';
+
+    if (b.publisher) {
+      const pubBadge = document.createElement('span');
+      pubBadge.className = 'slims-meta-badge';
+      pubBadge.textContent = `🏢 ${b.publisher}`;
+      meta.appendChild(pubBadge);
+    }
+
+    if (b.year) {
+      const yrBadge = document.createElement('span');
+      yrBadge.className = 'slims-meta-badge';
+      yrBadge.textContent = `📅 ${b.year}`;
+      meta.appendChild(yrBadge);
+    }
+
+    if (b.ddc) {
+      const ddcBadge = document.createElement('span');
+      ddcBadge.className = 'slims-ddc-badge';
+      ddcBadge.textContent = `🏷️ DDC: ${b.ddc}`;
+      meta.appendChild(ddcBadge);
+    }
+
+    if (b.isbn) {
+      const isbnBadge = document.createElement('span');
+      isbnBadge.className = 'slims-meta-badge';
+      isbnBadge.textContent = `🔢 ISBN: ${b.isbn}`;
+      meta.appendChild(isbnBadge);
+    }
+
+    card.appendChild(meta);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'btn-copy-slims';
+    copyBtn.innerHTML = '<span>📥</span> Salin ke Formulir';
+    copyBtn.addEventListener('click', () => {
+      applySlimsBookToForm(b);
+    });
+
+    card.appendChild(copyBtn);
+    slimsP2pResults.appendChild(card);
+  });
+}
+
+function applySlimsBookToForm(b) {
+  if (titleInput) {
+    titleInput.value = b.title;
+    titleInput.classList.remove('invalid');
+    if (titleError) titleError.textContent = '';
+  }
+
+  if (authorInput) {
+    authorInput.value = b.author;
+    authorInput.classList.remove('invalid');
+    if (authorError) authorError.textContent = '';
+  }
+
+  const descParts = [];
+  if (b.publisher) descParts.push(`Penerbit: ${b.publisher}`);
+  if (b.place) descParts.push(`Tempat: ${b.place}`);
+  if (b.year) descParts.push(`Tahun: ${b.year}`);
+  if (b.ddc) descParts.push(`No. Panggil / DDC: ${b.ddc}`);
+  if (b.isbn) descParts.push(`ISBN: ${b.isbn}`);
+  if (b.topic) descParts.push(`Subjek: ${b.topic}`);
+
+  if (descParts.length > 0 && descriptionInput) {
+    descriptionInput.value = descParts.join(' • ');
+  }
+
+  if (b.isbn && isbnInput) {
+    isbnInput.value = cleanIsbn(b.isbn) || b.isbn;
+  }
+
+  closeModal(modalSlimsP2p);
+  showToast(`✅ Data "${b.title}" berhasil disalin dari SLiMS!`);
 }
 
 

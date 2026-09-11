@@ -128,6 +128,9 @@
                 <button type="button" id="btn-open-paste-modal" class="btn btn-paste-action" title="Tempel data yang disalin dari tabel web Perpusnas untuk mengisi formulir otomatis">
                   <span>📋</span> Tempel Data Perpusnas
                 </button>
+                <button type="button" id="btn-open-slims-p2p" class="btn btn-slims-action" title="Layanan SLiMS P2P: Cari dan salin katalog dari perpustakaan SLiMS lain">
+                  <span>🤝</span> SLiMS P2P
+                </button>
               </div>
             </div>
 
@@ -498,6 +501,74 @@
             <button type="submit" class="btn btn-primary">Isi ke Formulir Otomatis</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 7: Layanan SLiMS P2P (Copy Cataloging)
+         ========================================================================== -->
+    <div id="modal-slims-p2p" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="slims-p2p-modal-title">
+      <div class="modal-dialog slims-modal-dialog">
+        <div class="modal-header">
+          <h3 id="slims-p2p-modal-title">🤝 Layanan SLiMS P2P (Copy Cataloging)</h3>
+          <button type="button" class="modal-close-btn" data-close="modal-slims-p2p" aria-label="Tutup modal SLiMS P2P">✕</button>
+        </div>
+
+        <div class="modal-body slims-modal-body">
+          <p class="modal-subtitle">Salin data katalog bibliografi dari server perpustakaan mitra yang menggunakan sistem <strong>SLiMS</strong>.</p>
+
+          <!-- Form Pencarian P2P SLiMS -->
+          <div class="slims-search-box-card">
+            <div class="form-group">
+              <label for="slims-server-select">Pilih Server Perpustakaan SLiMS</label>
+              <div class="slims-server-row">
+                <select id="slims-server-select" class="form-select">
+                  <option value="https://perpustakaan.kemdikbud.go.id/">Perpustakaan Kemendikbudristek RI</option>
+                  <option value="https://opac.uinjkt.ac.id/">UIN Syarif Hidayatullah Jakarta</option>
+                  <option value="https://pustaka.unand.ac.id/">Universitas Andalas (UNAND)</option>
+                  <option value="custom">+ Masukkan URL Server SLiMS Kustom...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Input URL Server Kustom -->
+            <div id="slims-custom-server-group" class="form-group hidden">
+              <label for="slims-custom-server-url">Alamat URL Server SLiMS (HTTPS) <span class="required">*</span></label>
+              <input 
+                type="url" 
+                id="slims-custom-server-url" 
+                placeholder="Contoh: https://opac.perpustakaan-kampus.ac.id/" 
+                autocomplete="off"
+              >
+              <small class="form-hint">Harus diawali https:// agar diizinkan oleh peramban.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="slims-search-keyword">Kata Kunci Pencarian (Judul, Pengarang, atau ISBN) <span class="required">*</span></label>
+              <div class="slims-input-with-btn">
+                <input 
+                  type="text" 
+                  id="slims-search-keyword" 
+                  placeholder="Contoh: Fiqih Sunnah atau 978..." 
+                  autocomplete="off"
+                >
+                <button type="button" id="btn-slims-search" class="btn btn-primary">
+                  <span>🔍</span> Cari
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Pesan Pencarian SLiMS -->
+          <div id="slims-p2p-status" class="slims-p2p-status hidden"></div>
+
+          <!-- Kontainer Hasil Pencarian SLiMS -->
+          <div id="slims-p2p-results" class="slims-p2p-results"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="modal-slims-p2p">Tutup</button>
+        </div>
       </div>
     </div>
 
