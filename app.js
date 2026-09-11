@@ -1334,10 +1334,37 @@ async function lookupBookByIsbn(isbnRaw) {
       }
     }
 
+    // 3. Jika tidak ditemukan di Google Books / Open Library, coba Perpusnas RI via Cloudflare Worker Proxy
+    if (!bookInfo) {
+      try {
+        const cfProxyUrl = `https://maktabah-isbn-proxy.iwandoumy18.workers.dev/?isbn=${encodeURIComponent(isbn)}`;
+        const cfRes = await fetch(cfProxyUrl);
+        if (cfRes.ok) {
+          const cfData = await cfRes.json();
+          if (cfData && cfData.success && cfData.title) {
+            bookInfo = {
+              source: 'Perpusnas RI',
+              title: cfData.title || '',
+              subtitle: '',
+              authors: cfData.authors || '',
+              publisher: cfData.publisher || '',
+              publishedDate: cfData.publishedDate || '',
+              pageCount: cfData.pageCount || '',
+              description: cfData.description || '',
+              categories: '',
+              isbn: cfData.isbn || isbn
+            };
+          }
+        }
+      } catch (cfErr) {
+        console.warn('Perpusnas Cloudflare Worker lookup error:', cfErr);
+      }
+    }
+
     if (!bookInfo) {
       setIsbnStatus(
         'error', 
-        `⚠️ Buku dengan ISBN <strong>${escapeHtml(isbn)}</strong> tidak ditemukan di database online (Google Books / Open Library). Silakan lengkapi data buku secara manual.`
+        `⚠️ Buku dengan ISBN <strong>${escapeHtml(isbn)}</strong> tidak ditemukan di database online (Google Books, Open Library, maupun Perpusnas RI). Silakan lengkapi data buku secara manual.`
       );
       showToast('⚠️ Data buku tidak ditemukan di database online');
       return;
@@ -1347,16 +1374,22 @@ async function lookupBookByIsbn(isbnRaw) {
     const fullTitle = bookInfo.subtitle ? `${bookInfo.title}: ${bookInfo.subtitle}` : bookInfo.title;
 
     // Susun deskripsi otomatis yang rapi dan informatif
-    const descParts = [];
-    if (bookInfo.publisher) descParts.push(`Penerbit: ${bookInfo.publisher}`);
-    if (bookInfo.publishedDate) descParts.push(`Tahun: ${bookInfo.publishedDate}`);
-    if (bookInfo.pageCount) descParts.push(bookInfo.pageCount);
-    if (bookInfo.isbn) descParts.push(`ISBN: ${bookInfo.isbn}`);
-    if (bookInfo.categories) descParts.push(`Kategori: ${bookInfo.categories}`);
-    if (bookInfo.description) {
-      const cleanDesc = bookInfo.description.replace(/\s+/g, ' ').trim();
-      const shortDesc = cleanDesc.length > 250 ? cleanDesc.slice(0, 247) + '...' : cleanDesc;
-      descParts.push(`Sinopsis: "${shortDesc}"`);
+    let finalDesc = '';
+    if (bookInfo.source === 'Perpusnas RI' && bookInfo.description) {
+      finalDesc = bookInfo.description;
+    } else {
+      const descParts = [];
+      if (bookInfo.publisher) descParts.push(`Penerbit: ${bookInfo.publisher}`);
+      if (bookInfo.publishedDate) descParts.push(`Tahun: ${bookInfo.publishedDate}`);
+      if (bookInfo.pageCount) descParts.push(bookInfo.pageCount);
+      if (bookInfo.isbn) descParts.push(`ISBN: ${bookInfo.isbn}`);
+      if (bookInfo.categories) descParts.push(`Kategori: ${bookInfo.categories}`);
+      if (bookInfo.description) {
+        const cleanDesc = bookInfo.description.replace(/\s+/g, ' ').trim();
+        const shortDesc = cleanDesc.length > 250 ? cleanDesc.slice(0, 247) + '...' : cleanDesc;
+        descParts.push(`Sinopsis: "${shortDesc}"`);
+      }
+      finalDesc = descParts.join(' • ');
     }
 
     // Isi ke form
@@ -1371,7 +1404,7 @@ async function lookupBookByIsbn(isbnRaw) {
       if (authorError) authorError.textContent = '';
     }
     if (descriptionInput) {
-      descriptionInput.value = descParts.join(' • ');
+      descriptionInput.value = finalDesc;
     }
 
     setIsbnStatus('success', `✅ Data ditemukan via ${bookInfo.source}: <strong>${escapeHtml(fullTitle)}</strong>`);
